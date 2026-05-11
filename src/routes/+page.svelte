@@ -19,12 +19,15 @@
   let modalScope = $state<'this' | 'all'>('this');
   let modalCategory = $state<'towel' | 'sheet' | 'uniform'>('towel');
 
-  const CAT_LABEL: Record<'towel' | 'sheet' | 'uniform', string> = {
-    towel: '타올', sheet: '시트', uniform: '유니폼',
-  };
+  const CAT_LIST: { key: 'towel' | 'sheet' | 'uniform'; label: string }[] = [
+    { key: 'towel', label: '타올' },
+    { key: 'sheet', label: '시트' },
+    { key: 'uniform', label: '유니폼' },
+  ];
 
   function generateItemName(cat: 'towel' | 'sheet' | 'uniform'): string {
-    return `${CAT_LABEL[cat]}-${genId().slice(0, 4).toUpperCase()}`;
+    const label = CAT_LIST.find(c => c.key === cat)?.label ?? cat;
+    return `${label}-${genId().slice(0, 4).toUpperCase()}`;
   }
 
   // 기록 드로어
@@ -488,17 +491,17 @@
 
       <div class="p-6 flex flex-col gap-5">
 
-        <!-- 카테고리 선택 -->
-        <div class="flex flex-col gap-3">
-          {#each (['towel', 'sheet', 'uniform'] as const) as cat (cat)}
+        <!-- 카테고리 선택 스크롤 리스트 -->
+        <div class="h-64 overflow-y-auto rounded-xl border border-base-300 flex flex-col">
+          {#each CAT_LIST as cat (cat.key)}
             <button
               type="button"
-              class="h-16 rounded-xl border-2 font-black text-2xl transition-all
-                {modalCategory === cat
-                  ? 'border-primary bg-primary text-primary-content'
-                  : 'border-base-300 bg-base-100 text-base-content/50 hover:border-primary/50'}"
-              onclick={() => { modalCategory = cat; }}
-            >{CAT_LABEL[cat]}</button>
+              class="px-5 py-5 text-left text-xl font-bold border-b border-base-200 last:border-b-0 transition-all
+                {modalCategory === cat.key
+                  ? 'bg-primary text-primary-content'
+                  : 'hover:bg-base-200 text-base-content'}"
+              onclick={() => { modalCategory = cat.key; }}
+            >{cat.label}</button>
           {/each}
         </div>
 
