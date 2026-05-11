@@ -17,25 +17,14 @@
   // 품목 추가 모달
   let showAddModal = $state(false);
   let modalScope = $state<'this' | 'all'>('this');
-
-  // 카테고리별 세부 품목 목록
-  const ITEM_NAMES: Record<'towel' | 'sheet' | 'uniform', string[]> = {
-    towel:   ['대타올','중타올','소타올','목욕가운','핸드타올','페이스타올','풀타올','짐타올','비치타올','슬리퍼타올','발매트','헤어타올','키즈타올','스포츠타올','냉감타올'],
-    sheet:   ['시트S','시트D','시트Q','시트K','두베커버S','두베커버D','두베커버Q','두베커버K','베개커버','베개커버L','매트리스커버S','매트리스커버D','매트리스커버K','패드커버S','패드커버D'],
-    uniform: ['상의','하의','앞치마','조끼','모자','주방복상의','주방복하의','청소복','객실복','벨복','안전조끼','방수복상의','방수복하의','반팔상의','반팔하의'],
-  };
+  let modalCategory = $state<'towel' | 'sheet' | 'uniform'>('towel');
 
   const CAT_LABEL: Record<'towel' | 'sheet' | 'uniform', string> = {
     towel: '타올', sheet: '시트', uniform: '유니폼',
   };
 
-  // 선택된 항목 (카테고리 + 품목명이 함께 결정됨)
-  let modalSelectedItem = $state<{ cat: 'towel' | 'sheet' | 'uniform'; name: string } | null>(null);
-
-  // 자동생성 품목명
   function generateItemName(cat: 'towel' | 'sheet' | 'uniform'): string {
-    const prefix = CAT_LABEL[cat];
-    return `${prefix}-${genId().slice(0, 4).toUpperCase()}`;
+    return `${CAT_LABEL[cat]}-${genId().slice(0, 4).toUpperCase()}`;
   }
 
   // 기록 드로어
@@ -137,7 +126,7 @@
   }
 
   function openAddModal() {
-    modalSelectedItem = null;
+    modalCategory = 'towel';
     modalScope = 'this';
     showAddModal = true;
   }
@@ -147,14 +136,12 @@
   }
 
   function submitAddItem() {
-    if (!modalSelectedItem) return;
-    const { cat, name } = modalSelectedItem;
-    const finalName = generateItemName(cat);
+    const name = generateItemName(modalCategory);
     if (modalScope === 'this') {
       if (!store.selectedClientId) return;
-      addLaundryItemType(store.selectedClientId, cat, finalName);
+      addLaundryItemType(store.selectedClientId, modalCategory, name);
     } else {
-      addLaundryItemTypeToAll(cat, finalName);
+      addLaundryItemTypeToAll(modalCategory, name);
     }
     closeAddModal();
   }
@@ -501,30 +488,17 @@
 
       <div class="p-6 flex flex-col gap-5">
 
-        <!-- 리스트 -->
-        <div class="h-72 overflow-y-auto rounded-xl border border-base-300 flex flex-col">
+        <!-- 카테고리 선택 -->
+        <div class="flex flex-col gap-3">
           {#each (['towel', 'sheet', 'uniform'] as const) as cat (cat)}
-            <!-- 카테고리 구분선 -->
-            <div class="px-5 py-2 bg-base-200 border-b border-base-300 sticky top-0">
-              <span class="text-sm font-black text-base-content/50 uppercase tracking-wider">{CAT_LABEL[cat]}</span>
-            </div>
-            {#each ITEM_NAMES[cat] as name (name)}
-              {@const isSel = modalSelectedItem?.cat === cat && modalSelectedItem?.name === name}
-              {@const alreadyExists = store.selectedClientId
-                ? store.laundryItems.some(i => i.clientId === store.selectedClientId && i.name === name && i.category === cat)
-                : false}
-              <button
-                type="button"
-                disabled={alreadyExists}
-                class="px-5 py-4 text-left text-xl font-bold border-b border-base-200 last:border-b-0 transition-all
-                  {isSel
-                    ? 'bg-primary text-primary-content'
-                    : alreadyExists
-                      ? 'bg-base-100 text-base-content/20 cursor-not-allowed'
-                      : 'hover:bg-base-200 text-base-content'}"
-                onclick={() => { modalSelectedItem = isSel ? null : { cat, name }; }}
-              >{name}</button>
-            {/each}
+            <button
+              type="button"
+              class="h-16 rounded-xl border-2 font-black text-2xl transition-all
+                {modalCategory === cat
+                  ? 'border-primary bg-primary text-primary-content'
+                  : 'border-base-300 bg-base-100 text-base-content/50 hover:border-primary/50'}"
+              onclick={() => { modalCategory = cat; }}
+            >{CAT_LABEL[cat]}</button>
           {/each}
         </div>
 
@@ -548,7 +522,6 @@
         <button
           type="button"
           class="btn btn-primary w-full h-16 text-xl font-black"
-          disabled={!modalSelectedItem}
           onclick={submitAddItem}
         >품목 추가하기</button>
       </div>
