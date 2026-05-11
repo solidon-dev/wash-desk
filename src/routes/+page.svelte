@@ -144,12 +144,12 @@
   <div class="flex-1 flex flex-col min-h-0 min-w-0 bg-base-100">
 
     <!-- 카테고리 탭 바 -->
-    <div class="h-14 bg-base-100 border-b border-base-300 px-2 shrink-0 flex items-center gap-1">
+    <div class="h-20 bg-base-100 border-b border-base-300 px-2 shrink-0 flex items-center gap-1">
       {#each categories as cat (cat.key)}
         {@const isActive = activeCategory === cat.key}
         <button
           type="button"
-          class="px-6 h-full text-base font-bold transition-colors rounded-none
+          class="px-8 h-full text-xl font-black transition-colors rounded-none
             {isActive
               ? 'bg-primary text-white'
               : 'text-base-content/50 hover:bg-base-200 hover:text-base-content'}"
@@ -163,24 +163,24 @@
     {#if store.selectedClientId}
       <button
         type="button"
-        class="w-full h-14 flex items-center justify-center gap-2 px-4 bg-primary/5 hover:bg-primary/10 text-primary transition-colors border-b border-primary/10 shrink-0"
+        class="w-full h-18 flex items-center justify-center gap-3 px-4 bg-primary/5 hover:bg-primary/10 text-primary transition-colors border-b border-primary/10 shrink-0 py-5"
         onclick={openAddModal}
       >
-        <Icon icon="heroicons:plus-circle" class="w-5 h-5" />
-        <span class="text-base font-bold">품목 추가</span>
+        <Icon icon="heroicons:plus-circle" class="w-7 h-7" />
+        <span class="text-xl font-black">품목 추가</span>
       </button>
     {/if}
 
     {#if filteredItems.length > 0}
-      <div class="h-14 bg-base-200 border-b border-base-300 px-4 shrink-0 flex items-center">
+      <div class="h-16 bg-base-200 border-b border-base-300 px-6 shrink-0 flex items-center">
         <div class="flex-1 min-w-0">
-          <span class="text-sm font-bold text-base-content/40 uppercase tracking-wider">품목명</span>
+          <span class="text-sm font-black text-base-content/40 uppercase tracking-wider">품목명</span>
         </div>
         <div class="w-10 shrink-0"></div>
-        <div class="w-32 text-center shrink-0">
-          <span class="text-sm font-bold text-base-content/40 uppercase tracking-wider">세탁완료</span>
+        <div class="w-36 text-center shrink-0">
+          <span class="text-sm font-black text-base-content/40 uppercase tracking-wider">세탁완료</span>
         </div>
-        <div class="w-12 shrink-0"></div>
+        <div class="w-14 shrink-0"></div>
       </div>
     {/if}
 

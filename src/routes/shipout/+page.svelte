@@ -137,11 +137,11 @@
   <div class="flex-1 flex flex-col min-h-0">
 
     <!-- 카테고리 탭 -->
-    <div class="h-14 bg-base-100 border-b border-base-300 px-2 shrink-0 flex items-center gap-1">
+    <div class="h-20 bg-base-100 border-b border-base-300 px-2 shrink-0 flex items-center gap-1">
       {#each categories as cat (cat.key)}
         <button
           type="button"
-          class="px-5 h-full text-base font-bold transition-colors rounded-none
+          class="px-8 h-full text-xl font-black transition-colors rounded-none
             {activeCategory === cat.key
               ? 'bg-primary text-white'
               : 'text-base-content/50 hover:bg-base-200 hover:text-base-content'}"
@@ -152,15 +152,15 @@
 
     <!-- 컬럼 헤더 -->
     {#if filteredItems.length > 0}
-      <div class="h-14 bg-base-200 border-b border-base-300 px-4 shrink-0 flex items-center">
+      <div class="h-16 bg-base-200 border-b border-base-300 px-6 shrink-0 flex items-center">
         <div class="flex-1 min-w-0">
-          <span class="text-sm font-semibold text-base-content/40 uppercase tracking-wider">품목명</span>
+          <span class="text-sm font-black text-base-content/40 uppercase tracking-wider">품목명</span>
         </div>
         <div class="w-36 text-center shrink-0">
-          <span class="text-sm font-semibold text-base-content/40 uppercase tracking-wider">세탁완료</span>
+          <span class="text-sm font-black text-base-content/40 uppercase tracking-wider">세탁완료</span>
         </div>
         <div class="w-52 text-center shrink-0">
-          <span class="text-sm font-semibold text-base-content/40 uppercase tracking-wider">출고수량</span>
+          <span class="text-sm font-black text-base-content/40 uppercase tracking-wider">출고수량</span>
         </div>
         <div class="w-14 shrink-0 flex items-center justify-center">
           <button

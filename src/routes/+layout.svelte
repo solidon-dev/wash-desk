@@ -20,26 +20,26 @@
 </script>
 
 <div class="flex flex-col h-screen bg-base-200 overflow-hidden select-none">
-  <header class="h-16 bg-primary flex items-center shrink-0 z-10">
+  <header class="h-20 bg-primary flex items-center shrink-0 z-10">
     <!-- 거래처 버튼 -->
     <button
       type="button"
-      class="flex items-center gap-2 px-6 h-full hover:bg-white/10 transition-colors shrink-0"
+      class="flex items-center gap-2 px-8 h-full hover:bg-white/10 transition-colors shrink-0"
       onclick={() => showClientModal = true}
     >
-      <span class="text-lg font-bold text-white/90 truncate max-w-52">
+      <span class="text-2xl font-black text-white/90 truncate max-w-64">
         {selectedClient?.name ?? '거래처 선택'}
       </span>
-      <Icon icon="heroicons:chevron-down" class="w-5 h-5 text-white/50 shrink-0" />
+      <Icon icon="heroicons:chevron-down" class="w-6 h-6 text-white/50 shrink-0" />
     </button>
-    <div class="w-px h-7 bg-white/20 mx-1 shrink-0"></div>
+    <div class="w-px h-9 bg-white/20 mx-2 shrink-0"></div>
     <!-- 탭 네비 -->
     <nav class="flex h-full">
       {#each NAV_ITEMS as nav}
         {@const isActive = currentPath === nav.path}
         <button
           type="button"
-          class="px-7 h-full text-base font-bold transition-colors
+          class="px-10 h-full text-xl font-black transition-colors
             {isActive
               ? 'bg-white text-primary'
               : 'text-white/60 hover:text-white hover:bg-white/10'}"
