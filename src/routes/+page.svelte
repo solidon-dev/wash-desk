@@ -9,12 +9,9 @@
 
   // ── 타입 ─────────────────────────────────────────────────────────
   type CategoryKey = LaundryCategory;
-  type EditMode = 'add' | 'set';
-
   // ── 상태 ─────────────────────────────────────────────────────────
   let activeCategory = $state<CategoryKey>('all');
   let selectedItemId = $state<string | null>(null);
-  let editMode = $state<EditMode>('add');
   let inputValue = $state('');
 
   // 품목 추가 모달
@@ -54,8 +51,7 @@
 
   let previewResult = $derived(() => {
     if (inputNum === null || isNaN(inputNum)) return null;
-    if (editMode === 'add') return currentCompleted + inputNum;
-    return inputNum;
+    return currentCompleted + inputNum;
   });
 
   // 기록 드로어: 오늘 날짜 필터
@@ -89,20 +85,11 @@
     }
   }
 
-  function setEditMode(mode: EditMode) {
-    editMode = mode;
-    inputValue = '';
-  }
-
   function applyInput() {
     const num = inputNum;
     if (num === null || isNaN(num) || num < 0) return;
     if (!store.selectedClientId || !selectedItem) return;
-    if (editMode === 'add') {
-      addCompleted(store.selectedClientId, selectedItem.id, num);
-    } else {
-      setCompleted(store.selectedClientId, selectedItem.id, num);
-    }
+    addCompleted(store.selectedClientId, selectedItem.id, num);
     inputValue = '';
   }
 
@@ -285,108 +272,61 @@
     <div class="flex-1 overflow-y-auto flex flex-col min-h-0">
       {#if selectedItem}
 
-        <!-- 현재 수량 표시 -->
+        <!-- 현재 수량 + 입력 미리보기 2컬럼 -->
         <div class="px-6 py-5 border-b border-base-200 shrink-0">
-          <p class="text-sm font-bold text-base-content/40 uppercase tracking-wider mb-2">현재 수량</p>
-          <div class="rounded-xl bg-primary/5 border border-primary/20 px-3 py-2 flex items-center justify-between">
-            <div class="flex-1 min-w-0">
-              <span class="text-xl font-black text-base-content truncate block">{selectedItem.name}</span>
-              <div class="flex items-center gap-2 mt-0.5">
-                <span class="text-xs text-base-content/40">완료</span>
-                <span class="text-4xl font-black text-success">{currentCompleted}</span>
-              </div>
+          <div class="grid grid-cols-2 gap-3 h-28">
+            <!-- 왼쪽: 현재 수량 -->
+            <div class="rounded-2xl bg-base-200 flex flex-col items-center justify-center gap-1">
+              <span class="text-xs font-bold text-base-content/40 uppercase tracking-wider">현재 수량</span>
+              <span class="text-5xl font-black text-base-content">{currentCompleted}</span>
+              <span class="text-sm font-bold text-base-content/30">개</span>
             </div>
-            <button
-              type="button"
-              class="btn btn-ghost btn-xs btn-circle ml-2 text-base-content/30 hover:text-base-content/60"
-              onclick={() => { selectedItemId = null; inputValue = ''; }}
-              title="선택 해제"
-            >
-              <Icon icon="heroicons:x-mark" class="w-3 h-3" />
-            </button>
-          </div>
-        </div>
-
-        <!-- 편집 모드 선택 -->
-        <div class="px-6 py-5 border-b border-base-200 shrink-0">
-          <p class="text-sm font-bold text-base-content/40 uppercase tracking-wider mb-2">입력 방식</p>
-          <div class="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              class="btn h-16 rounded-lg text-lg font-black
-                {editMode === 'add'
-                  ? 'btn-success text-white'
-                  : 'btn-ghost bg-base-200 text-base-content/60'}"
-              onclick={() => setEditMode('add')}
-            >
-              <Icon icon="heroicons:plus" class="w-4 h-4" />
-              추가
-            </button>
-            <button
-              type="button"
-              class="btn h-16 rounded-lg text-lg font-black
-                {editMode === 'set'
-                  ? 'btn-primary text-white'
-                  : 'btn-ghost bg-base-200 text-base-content/60'}"
-              onclick={() => setEditMode('set')}
-            >
-              <Icon icon="heroicons:pencil" class="w-4 h-4" />
-              지정
-            </button>
-          </div>
-        </div>
-
-        <!-- 미리보기 박스 -->
-        <div class="px-6 py-5 pb-1 shrink-0">
-          <div class="h-20 rounded-xl bg-base-200 border-2
-            {editMode === 'add' ? 'border-success/50' : 'border-primary/50'}
-            flex items-center px-4">
-            {#if inputNum !== null && !isNaN(inputNum)}
-              {#if editMode === 'add'}
-                <span class="text-sm font-bold text-success mr-2 shrink-0">+</span>
-                <span class="text-2xl font-bold text-base-content">{currentCompleted}</span>
-                <span class="text-lg text-base-content/40 mx-2">+</span>
-                <span class="text-2xl font-bold text-success">{inputNum}</span>
-                <span class="text-lg text-base-content/40 mx-2">=</span>
-                <span class="text-5xl font-black text-success ml-auto">{previewResult()}</span>
+            <!-- 오른쪽: 입력값 미리보기 -->
+            <div class="rounded-2xl border-2 border-success/60 bg-success/5 flex flex-col items-center justify-center gap-1">
+              {#if inputNum !== null && !isNaN(inputNum)}
+                <span class="text-xs font-bold text-success/70 uppercase tracking-wider">+ {inputNum} = 결과</span>
+                <span class="text-5xl font-black text-success">{previewResult()}</span>
+                <span class="text-sm font-bold text-success/50">개</span>
               {:else}
-                <span class="text-sm font-bold text-primary mr-2 shrink-0">→</span>
-                <span class="text-2xl font-bold text-base-content">{currentCompleted}</span>
-                <span class="text-lg text-base-content/40 mx-2">→</span>
-                <span class="text-5xl font-black text-primary ml-auto">{inputNum}</span>
+                <span class="text-xs font-bold text-base-content/30 uppercase tracking-wider">입력</span>
+                <span class="text-5xl font-black text-base-content/20 tracking-widest">{inputValue || '—'}</span>
+                <span class="text-sm font-bold text-base-content/20">개</span>
               {/if}
-            {:else}
-              <span class="text-sm font-bold text-base-content/30 mr-2">입력</span>
-              <span class="text-5xl font-black text-base-content/20 flex-1 text-right tracking-widest">
-                {inputValue || '—'}
-              </span>
-              <span class="text-lg text-base-content/20 ml-2">개</span>
-            {/if}
+            </div>
           </div>
+          <!-- 선택 해제 버튼 -->
+          <button
+            type="button"
+            class="mt-3 w-full h-9 rounded-xl btn btn-ghost text-sm text-base-content/40 border border-base-200"
+            onclick={() => { selectedItemId = null; inputValue = ''; }}
+          >
+            <Icon icon="heroicons:x-mark" class="w-4 h-4" />
+            {selectedItem.name} 선택 해제
+          </button>
         </div>
 
         <!-- 숫자패드 -->
-        <div class="px-6 py-5 shrink-0">
+        <div class="px-6 pt-5 pb-2 shrink-0">
           <div class="grid grid-cols-3 gap-2 select-none">
             {#each (['1','2','3','4','5','6','7','8','9','back','0','clear'] as const) as key, i (i)}
               {#if key === 'clear'}
                 <button
                   type="button"
-                  class="h-20 rounded-lg font-black text-3xl btn btn-error btn-outline active:scale-95"
+                  class="h-24 rounded-xl font-black text-2xl btn btn-error btn-outline active:scale-95"
                   onclick={() => { inputValue = ''; }}
                 >C</button>
               {:else if key === 'back'}
                 <button
                   type="button"
-                  class="h-20 rounded-lg font-black text-3xl btn btn-ghost bg-base-200 border border-base-300 flex items-center justify-center active:scale-95"
+                  class="h-24 rounded-xl font-black btn btn-ghost bg-base-200 border border-base-300 flex items-center justify-center active:scale-95"
                   onclick={() => { inputValue = inputValue.slice(0, -1); }}
                 >
-                  <Icon icon="heroicons:backspace" class="w-7 h-7" />
+                  <Icon icon="heroicons:backspace" class="w-8 h-8" />
                 </button>
               {:else}
                 <button
                   type="button"
-                  class="h-20 rounded-lg font-black text-3xl btn btn-ghost bg-base-100 border border-base-300 shadow-sm text-base-content active:scale-95"
+                  class="h-24 rounded-xl font-black text-3xl btn btn-ghost bg-base-100 border border-base-300 shadow-sm text-base-content active:scale-95"
                   onclick={() => { if (inputValue.length < 6) inputValue = inputValue + key; }}
                 >{key}</button>
               {/if}
@@ -395,20 +335,18 @@
         </div>
 
         <!-- 적용 버튼 -->
-        <div class="px-6 pb-5 shrink-0">
+        <div class="px-6 pb-6 pt-2 shrink-0">
           <button
             type="button"
-            class="btn w-full h-20 text-xl font-black
-              {editMode === 'add' ? 'btn-success' : 'btn-primary'}
+            class="btn btn-success w-full h-20 text-2xl font-black
               {(inputNum === null || isNaN(inputNum ?? NaN)) ? 'opacity-40' : ''}"
             disabled={inputNum === null || isNaN(inputNum ?? NaN)}
             onclick={applyInput}
           >
-            {editMode === 'add' ? '추가 적용' : '수량 지정'}
+            <Icon icon="heroicons:plus" class="w-7 h-7" />
+            추가 적용
             {#if inputValue !== '' && inputNum !== null && !isNaN(inputNum)}
-              <span class="text-xs font-normal opacity-80 ml-1">
-                → {previewResult()}개
-              </span>
+              <span class="text-base font-normal opacity-80 ml-1">→ {previewResult()}개</span>
             {/if}
           </button>
         </div>
@@ -465,49 +403,16 @@
     </div>
 
     <div class="overflow-y-auto flex flex-col">
-      <!-- 편집 모드 선택 -->
-      <div class="px-4 py-3 border-b border-base-200 shrink-0">
-        <div class="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            class="btn btn-sm h-10 rounded-lg font-bold
-              {editMode === 'add' ? 'btn-success text-white' : 'btn-ghost bg-base-200 text-base-content/60'}"
-            onclick={() => setEditMode('add')}
-          >
-            <Icon icon="heroicons:plus" class="w-4 h-4" />
-            추가
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm h-10 rounded-lg font-bold
-              {editMode === 'set' ? 'btn-primary text-white' : 'btn-ghost bg-base-200 text-base-content/60'}"
-            onclick={() => setEditMode('set')}
-          >
-            <Icon icon="heroicons:pencil" class="w-4 h-4" />
-            지정
-          </button>
-        </div>
-      </div>
-
       <!-- 미리보기 박스 -->
       <div class="px-4 pt-3 pb-1 shrink-0">
-        <div class="h-14 rounded-xl bg-base-200 border-2
-          {editMode === 'add' ? 'border-success/50' : 'border-primary/50'}
-          flex items-center px-4">
+        <div class="h-14 rounded-xl bg-base-200 border-2 border-success/50 flex items-center px-4">
           {#if inputNum !== null && !isNaN(inputNum)}
-            {#if editMode === 'add'}
-              <span class="text-xs font-bold text-success mr-2 shrink-0">+</span>
-              <span class="text-lg font-bold text-base-content">{currentCompleted}</span>
-              <span class="text-sm text-base-content/40 mx-2">+</span>
-              <span class="text-lg font-bold text-success">{inputNum}</span>
-              <span class="text-sm text-base-content/40 mx-2">=</span>
-              <span class="text-2xl font-black text-success ml-auto">{previewResult()}</span>
-            {:else}
-              <span class="text-xs font-bold text-primary mr-2 shrink-0">→</span>
-              <span class="text-lg font-bold text-base-content">{currentCompleted}</span>
-              <span class="text-sm text-base-content/40 mx-2">→</span>
-              <span class="text-2xl font-black text-primary ml-auto">{inputNum}</span>
-            {/if}
+            <span class="text-xs font-bold text-success mr-2 shrink-0">+</span>
+            <span class="text-lg font-bold text-base-content">{currentCompleted}</span>
+            <span class="text-sm text-base-content/40 mx-2">+</span>
+            <span class="text-lg font-bold text-success">{inputNum}</span>
+            <span class="text-sm text-base-content/40 mx-2">=</span>
+            <span class="text-2xl font-black text-success ml-auto">{previewResult()}</span>
           {:else}
             <span class="text-xs font-bold text-base-content/30 mr-2">입력</span>
             <span class="text-4xl font-black text-base-content/20 flex-1 text-right tracking-widest">
@@ -539,13 +444,12 @@
       <div class="px-4 pb-4 shrink-0">
         <button
           type="button"
-          class="btn w-full h-12 font-bold
-            {editMode === 'add' ? 'btn-success' : 'btn-primary'}
+          class="btn w-full h-12 font-bold btn-success
             {(inputNum === null || isNaN(inputNum ?? NaN)) ? 'opacity-40' : ''}"
           disabled={inputNum === null || isNaN(inputNum ?? NaN)}
           onclick={applyInput}
         >
-          {editMode === 'add' ? '추가 적용' : '수량 지정'}
+          추가 적용
           {#if inputValue !== '' && inputNum !== null && !isNaN(inputNum)}
             <span class="text-xs font-normal opacity-80 ml-1">→ {previewResult()}개</span>
           {/if}
