@@ -405,6 +405,9 @@
 
 {#if showNumpadModal && editingItemId !== null}
   {@const modalItem = store.laundryItems.find((i: LaundryItem) => i.id === editingItemId)}
+  {@const maxQty = modalItem?.counts.completed ?? 0}
+  {@const numpadNum = numpadValue !== '' ? parseInt(numpadValue, 10) : null}
+  {@const isOverMax = numpadNum !== null && numpadNum > maxQty}
   <div
     class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
     role="button" tabindex="-1"
@@ -432,15 +435,21 @@
         <div class="grid grid-cols-2 gap-3 h-28">
           <div class="rounded-2xl bg-base-200 flex flex-col items-center justify-center gap-1">
             <span class="text-xs font-bold text-base-content/40 uppercase tracking-wider">출고가능</span>
-            <span class="text-5xl font-black text-base-content">{modalItem?.counts.completed ?? 0}</span>
+            <span class="text-5xl font-black text-base-content">{maxQty}</span>
             <span class="text-sm font-bold text-base-content/30">개</span>
           </div>
-          <div class="rounded-2xl border-2 border-primary/60 bg-primary/5 flex flex-col items-center justify-center gap-1">
-            <span class="text-xs font-bold text-base-content/30 uppercase tracking-wider">입력</span>
-            <span class="text-5xl font-black tracking-widest {numpadValue ? 'text-primary' : 'text-base-content/20'}">{numpadValue || '—'}</span>
-            <span class="text-sm font-bold text-base-content/20">개</span>
+          <div class="rounded-2xl border-2 {isOverMax ? 'border-error/60 bg-error/5' : 'border-primary/60 bg-primary/5'} flex flex-col items-center justify-center gap-1 transition-colors">
+            <span class="text-xs font-bold {isOverMax ? 'text-error/60' : 'text-base-content/30'} uppercase tracking-wider">입력</span>
+            <span class="text-5xl font-black tracking-widest {isOverMax ? 'text-error' : numpadValue ? 'text-primary' : 'text-base-content/20'}">{numpadValue || '—'}</span>
+            <span class="text-sm font-bold {isOverMax ? 'text-error/40' : 'text-base-content/20'}">개</span>
           </div>
         </div>
+        {#if isOverMax}
+          <div class="flex items-center gap-2 px-4 py-3 rounded-xl bg-error/10 border border-error/30">
+            <Icon icon="heroicons:exclamation-triangle" class="w-5 h-5 text-error shrink-0" />
+            <p class="text-sm font-bold text-error">출고가능 수량({maxQty}개)을 초과했습니다. 확인 시 자동으로 최댓값으로 입력됩니다.</p>
+          </div>
+        {/if}
         <div class="grid grid-cols-3 gap-2 select-none">
           {#each (['1','2','3','4','5','6','7','8','9','back','0','clear'] as const) as key, i (i)}
             {#if key === 'clear'}
@@ -464,10 +473,16 @@
           {/each}
         </div>
         <button type="button"
-          class="btn btn-primary w-full h-16 text-2xl font-black {numpadValue === '' ? 'opacity-40' : ''}"
+          class="btn w-full h-16 text-2xl font-black {numpadValue === '' ? 'btn-primary opacity-40' : isOverMax ? 'btn-warning' : 'btn-primary'}"
           disabled={numpadValue === ''}
           onclick={() => handleNumpadConfirm(numpadValue)}
-        >수량 확인</button>
+        >
+          {#if isOverMax}
+            최댓값({maxQty}개)으로 확인
+          {:else}
+            수량 확인
+          {/if}
+        </button>
       </div>
     </div>
   </div>
