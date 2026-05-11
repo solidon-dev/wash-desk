@@ -17,8 +17,28 @@
   // 품목 추가 모달
   let showAddModal = $state(false);
   let modalCategory = $state<'towel' | 'sheet' | 'uniform'>('towel');
-  let modalItemName = $state('');
   let modalScope = $state<'this' | 'all'>('this');
+
+  // 카테고리별 세부 품목 목록
+  const ITEM_NAMES: Record<'towel' | 'sheet' | 'uniform', string[]> = {
+    towel:   ['대타올','중타올','소타올','목욕가운','핸드타올','페이스타올','풀타올','짐타올','비치타올','슬리퍼타올','발매트','헤어타올','키즈타올','스포츠타올','냉감타올'],
+    sheet:   ['시트S','시트D','시트Q','시트K','두베커버S','두베커버D','두베커버Q','두베커버K','베개커버','베개커버L','매트리스커버S','매트리스커버D','매트리스커버K','패드커버S','패드커버D'],
+    uniform: ['상의','하의','앞치마','조끼','모자','주방복상의','주방복하의','청소복','객실복','벨복','안전조끼','방수복상의','방수복하의','반팔상의','반팔하의'],
+  };
+
+  // 선택된 세부 품목명 (없으면 자동생성)
+  let modalSelectedName = $state<string | null>(null);
+
+  // 자동생성 품목명: 카테고리 한글 + genId 앞 4자리
+  function generateItemName(cat: 'towel' | 'sheet' | 'uniform'): string {
+    const prefix = { towel: '타올', sheet: '시트', uniform: '유니폼' }[cat];
+    return `${prefix}-${genId().slice(0, 4).toUpperCase()}`;
+  }
+
+  // 최종 품목명: 선택했으면 선택값, 아니면 자동생성
+  let resolvedItemName = $derived(
+    modalSelectedName ?? generateItemName(modalCategory)
+  );
 
   // 기록 드로어
   let showLogDrawer = $state(false);
@@ -120,7 +140,7 @@
 
   function openAddModal() {
     modalCategory = 'towel';
-    modalItemName = '';
+    modalSelectedName = null;
     modalScope = 'this';
     showAddModal = true;
   }
@@ -130,7 +150,7 @@
   }
 
   function submitAddItem() {
-    const name = modalItemName.trim();
+    const name = resolvedItemName.trim();
     if (!name) return;
     if (modalScope === 'this') {
       if (!store.selectedClientId) return;
@@ -461,87 +481,110 @@
 ═══════════════════════════════════════════════════════════════════ -->
 {#if showAddModal}
   <div
-    class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center sm:p-4"
+    class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
     role="button" tabindex="-1"
     onclick={closeAddModal}
     onkeydown={(e) => e.key === 'Escape' && closeAddModal()}
     aria-label="닫기"
   >
     <div
-      class="bg-base-100 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden"
+      class="bg-base-100 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
       role="dialog" aria-modal="true"
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => e.stopPropagation()}
       tabindex="-1"
     >
-      <!-- 모달 헤더 -->
-      <div class="flex items-center justify-between px-4 py-3 border-b border-base-200">
-        <span class="text-sm font-bold text-base-content">품목 추가</span>
-        <button type="button" class="btn btn-ghost btn-xs btn-circle" onclick={closeAddModal}>
-          <Icon icon="heroicons:x-mark" class="w-3.5 h-3.5" />
+      <!-- 헤더 -->
+      <div class="px-6 py-5 bg-primary flex items-center justify-between">
+        <span class="text-2xl font-black text-primary-content">품목 추가</span>
+        <button type="button" class="btn btn-ghost btn-circle text-primary-content/70" onclick={closeAddModal}>
+          <Icon icon="heroicons:x-mark" class="w-6 h-6" />
         </button>
       </div>
 
-      <div class="px-4 py-4 space-y-4">
-        <!-- 카테고리 선택 -->
+      <div class="p-6 space-y-6">
+
+        <!-- 카테고리 탭 -->
         <div>
-          <p class="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2">카테고리</p>
-          <div class="grid grid-cols-3 gap-2">
-            {#each ([['towel', '🛁', '타올'], ['sheet', '🛏', '시트'], ['uniform', '👔', '유니폼']] as const) as [cat, icon, label] (cat)}
+          <p class="text-sm font-black text-base-content/40 uppercase tracking-wider mb-3">카테고리</p>
+          <div class="flex gap-2">
+            {#each ([['towel', '타올'], ['sheet', '시트'], ['uniform', '유니폼']] as const) as [cat, label] (cat)}
               <button
                 type="button"
-                class="flex flex-col items-center gap-1 py-3 rounded-xl border-2 transition-all font-medium text-sm
+                class="flex-1 h-14 rounded-xl border-2 font-black text-lg transition-all
                   {modalCategory === cat
-                    ? 'border-primary bg-primary/5 text-primary'
-                    : 'border-base-300 bg-base-100 text-base-content/60 hover:border-base-400'}"
-                onclick={() => { modalCategory = cat; }}
-              >
-                <span class="text-2xl">{icon}</span>
-                <span>{label}</span>
-              </button>
+                    ? 'border-primary bg-primary text-primary-content'
+                    : 'border-base-300 bg-base-100 text-base-content/50 hover:border-primary/50'}"
+                onclick={() => { modalCategory = cat; modalSelectedName = null; }}
+              >{label}</button>
             {/each}
           </div>
         </div>
 
-        <!-- 품목명 입력 -->
+        <!-- 품목명 선택 (스크롤) -->
         <div>
-          <p class="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2">품목명</p>
-          <input
-            type="text"
-            class="input input-bordered w-full text-sm font-medium"
-            placeholder="예) 대형 수건, 베갯잇..."
-            bind:value={modalItemName}
-            onkeydown={(e) => e.key === 'Enter' && submitAddItem()}
-          />
+          <p class="text-sm font-black text-base-content/40 uppercase tracking-wider mb-3">품목명 선택</p>
+          <div class="h-52 overflow-y-auto rounded-xl border border-base-300 flex flex-col">
+            {#each ITEM_NAMES[modalCategory] as name (name)}
+              {@const alreadyExists = store.selectedClientId
+                ? store.laundryItems.some(i => i.clientId === store.selectedClientId && i.name === name && i.category === modalCategory)
+                : false}
+              <button
+                type="button"
+                class="px-5 py-4 text-left text-lg font-bold border-b border-base-200 last:border-b-0 transition-all
+                  {modalSelectedName === name
+                    ? 'bg-primary text-primary-content'
+                    : alreadyExists
+                      ? 'bg-base-200 text-base-content/30 cursor-not-allowed'
+                      : 'hover:bg-base-200 text-base-content'}"
+                disabled={alreadyExists}
+                onclick={() => { modalSelectedName = modalSelectedName === name ? null : name; }}
+              >
+                <span>{name}</span>
+                {#if alreadyExists}
+                  <span class="text-xs font-bold ml-2 opacity-60">이미 등록됨</span>
+                {/if}
+              </button>
+            {/each}
+          </div>
+          <p class="text-xs text-base-content/30 mt-2 font-bold">선택하지 않으면 자동으로 유니크한 이름이 부여됩니다</p>
+        </div>
+
+        <!-- 미리보기 -->
+        <div class="rounded-xl bg-base-200 px-5 py-4 flex items-center gap-3">
+          <span class="text-sm font-black text-base-content/40 shrink-0">등록될 품목명</span>
+          <span class="text-xl font-black text-primary truncate">{resolvedItemName}</span>
+          {#if !modalSelectedName}
+            <span class="text-xs font-bold text-base-content/30 shrink-0 ml-auto">자동생성</span>
+          {/if}
         </div>
 
         <!-- 적용 범위 -->
         <div>
-          <p class="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2">적용 범위</p>
-          <div class="grid grid-cols-2 gap-2">
+          <p class="text-sm font-black text-base-content/40 uppercase tracking-wider mb-3">적용 범위</p>
+          <div class="grid grid-cols-2 gap-3">
             <button
               type="button"
-              class="btn btn-sm h-10 rounded-lg font-medium
-                {modalScope === 'this' ? 'btn-primary' : 'btn-ghost bg-base-200 text-base-content/60'}"
+              class="h-14 rounded-xl border-2 font-black text-lg transition-all
+                {modalScope === 'this' ? 'border-primary bg-primary text-primary-content' : 'border-base-300 bg-base-100 text-base-content/50 hover:border-primary/50'}"
               onclick={() => { modalScope = 'this'; }}
             >이 거래처만</button>
             <button
               type="button"
-              class="btn btn-sm h-10 rounded-lg font-medium
-                {modalScope === 'all' ? 'btn-warning' : 'btn-ghost bg-base-200 text-base-content/60'}"
+              class="h-14 rounded-xl border-2 font-black text-lg transition-all
+                {modalScope === 'all' ? 'border-warning bg-warning text-warning-content' : 'border-base-300 bg-base-100 text-base-content/50 hover:border-warning/50'}"
               onclick={() => { modalScope = 'all'; }}
             >모든 거래처</button>
           </div>
           {#if modalScope === 'all'}
-            <p class="text-xs text-warning font-bold mt-1.5">⚠ 모든 거래처에 동일하게 추가됩니다</p>
+            <p class="text-sm text-warning font-bold mt-2">⚠ 모든 거래처에 동일하게 추가됩니다</p>
           {/if}
         </div>
 
         <!-- 추가 버튼 -->
         <button
           type="button"
-          class="btn btn-primary w-full font-bold"
-          disabled={!modalItemName.trim()}
+          class="btn btn-primary w-full h-16 text-xl font-black"
           onclick={submitAddItem}
         >품목 추가하기</button>
       </div>
