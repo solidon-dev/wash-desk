@@ -137,11 +137,11 @@
   <div class="flex-1 flex flex-col min-h-0">
 
     <!-- 카테고리 탭 -->
-    <div class="h-10 bg-base-100 border-b border-base-300 px-2 shrink-0 flex items-center gap-1">
+    <div class="h-14 bg-base-100 border-b border-base-300 px-2 shrink-0 flex items-center gap-1">
       {#each categories as cat (cat.key)}
         <button
           type="button"
-          class="px-5 h-full text-sm font-semibold transition-colors rounded-none
+          class="px-5 h-full text-base font-bold transition-colors rounded-none
             {activeCategory === cat.key
               ? 'bg-primary text-white'
               : 'text-base-content/50 hover:bg-base-200 hover:text-base-content'}"
@@ -152,26 +152,26 @@
 
     <!-- 컬럼 헤더 -->
     {#if filteredItems.length > 0}
-      <div class="h-10 bg-base-200 border-b border-base-300 px-4 shrink-0 flex items-center">
+      <div class="h-14 bg-base-200 border-b border-base-300 px-4 shrink-0 flex items-center">
         <div class="flex-1 min-w-0">
-          <span class="text-xs font-semibold text-base-content/40 uppercase tracking-wider">품목명</span>
+          <span class="text-sm font-semibold text-base-content/40 uppercase tracking-wider">품목명</span>
         </div>
-        <div class="w-24 text-center shrink-0">
-          <span class="text-xs font-semibold text-base-content/40 uppercase tracking-wider">세탁완료</span>
+        <div class="w-32 text-center shrink-0">
+          <span class="text-sm font-semibold text-base-content/40 uppercase tracking-wider">세탁완료</span>
         </div>
         <div class="w-40 text-center shrink-0">
-          <span class="text-xs font-semibold text-base-content/40 uppercase tracking-wider">출고수량</span>
+          <span class="text-sm font-semibold text-base-content/40 uppercase tracking-wider">출고수량</span>
         </div>
         <div class="w-10 shrink-0 flex items-center justify-center">
           <button
             type="button"
-            class="w-5 h-5 rounded-full border-2 transition-all duration-150 flex items-center justify-center
+            class="w-8 h-8 rounded-full border-2 transition-all duration-150 flex items-center justify-center
               {isAllSelected ? 'bg-primary border-primary' : 'border-base-content/30 hover:border-primary'}"
             onclick={toggleSelectAll}
             title={isAllSelected ? '전체 해제' : '전체 선택'}
           >
             {#if isAllSelected}
-              <Icon icon="heroicons:check" class="w-3 h-3 text-primary-content" />
+              <Icon icon="heroicons:check" class="w-5 h-5 text-primary-content" />
             {/if}
           </button>
         </div>
@@ -193,7 +193,7 @@
           <div
             role="button"
             tabindex="0"
-            class="flex items-center min-h-14 px-4 border-b border-base-200 transition-colors cursor-pointer
+            class="flex items-center min-h-20 px-4 border-b border-base-200 transition-colors cursor-pointer
               {isSel
                 ? 'bg-primary/5 border-l-2 border-l-primary'
                 : 'hover:bg-base-200/60 border-l-2 border-l-transparent'}"
@@ -202,12 +202,12 @@
           >
             <!-- 품목명 -->
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold {isSel ? 'text-primary' : 'text-base-content'}">{item.name}</p>
+              <p class="text-lg font-bold {isSel ? 'text-primary' : 'text-base-content'}">{item.name}</p>
             </div>
 
             <!-- 세탁완료 수량 -->
-            <div class="w-24 text-center shrink-0">
-              <span class="text-xl font-black {item.counts.completed === 0 ? 'text-base-content/20' : 'text-success'}">{item.counts.completed}</span>
+            <div class="w-32 text-center shrink-0">
+              <span class="text-3xl font-black {item.counts.completed === 0 ? 'text-base-content/20' : 'text-success'}">{item.counts.completed}</span>
             </div>
 
             <!-- 출고수량 컨트롤 -->
@@ -215,17 +215,17 @@
               {#if isSel}
                 <button
                   aria-label="수량 감소"
-                  class="btn btn-xs btn-square"
+                  class="btn btn-sm btn-square"
                   onclick={(e) => { e.stopPropagation(); adjustQty(item.id, -1); }}
                 >−</button>
                 <button
                   aria-label="수량 직접 입력"
-                  class="min-w-10 px-2 h-8 rounded-lg border-2 border-primary text-primary font-black text-lg text-center transition-colors hover:bg-primary/5"
+                  class="min-w-16 px-2 h-10 rounded-lg border-2 border-primary text-primary font-black text-2xl text-center transition-colors hover:bg-primary/5"
                   onclick={(e) => { e.stopPropagation(); openNumpad(item.id); }}
                 >{qty}</button>
                 <button
                   aria-label="수량 증가"
-                  class="btn btn-xs btn-square btn-primary"
+                  class="btn btn-sm btn-square btn-primary"
                   onclick={(e) => { e.stopPropagation(); adjustQty(item.id, 1); }}
                 >+</button>
               {:else}
@@ -235,10 +235,10 @@
 
             <!-- 체크 서클 -->
             <div class="w-10 shrink-0 flex justify-center">
-              <div class="w-5 h-5 rounded-full border-2 transition-all duration-150 flex items-center justify-center
+              <div class="w-8 h-8 rounded-full border-2 transition-all duration-150 flex items-center justify-center
                 {isSel ? 'bg-primary border-primary' : 'border-base-content/30'}">
                 {#if isSel}
-                  <Icon icon="heroicons:check" class="w-3 h-3 text-primary-content" />
+                  <Icon icon="heroicons:check" class="w-5 h-5 text-primary-content" />
                 {/if}
               </div>
             </div>
@@ -249,7 +249,7 @@
   </div>
 
   <!-- ── 출고 확인 패널 (데스크탑) ── -->
-  <aside class="hidden md:flex flex-col w-80 bg-base-100 border-l border-base-200 shrink-0 min-h-0">
+  <aside class="hidden md:flex flex-col w-2/5 bg-base-100 border-l border-base-200 shrink-0 min-h-0">
 
     <div class="flex-1 overflow-y-auto flex flex-col min-h-0 shrink">
 
@@ -266,17 +266,17 @@
 
     <!-- 선택 품목 요약 -->
       {#if selectedEntries.length > 0}
-        <div class="px-4 py-3 border-b border-base-200 shrink-0">
-          <p class="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2">선택 요약</p>
+        <div class="px-6 py-5 border-b border-base-200 shrink-0">
+          <p class="text-sm font-bold text-base-content/40 uppercase tracking-wider mb-2">선택 요약</p>
           <div class="flex items-center justify-between px-3 py-3 rounded-xl bg-base-200">
             <div>
               <p class="text-xs text-base-content/40 mb-0.5">품목 수</p>
-              <p class="text-lg font-black text-base-content">{selectedEntries.length}<span class="text-xs font-medium ml-1 text-base-content/40">종</span></p>
+              <p class="text-4xl font-black text-base-content">{selectedEntries.length}<span class="text-sm font-medium ml-1 text-base-content/40">종</span></p>
             </div>
             <div class="w-px h-8 bg-base-300"></div>
             <div class="text-right">
               <p class="text-xs text-base-content/40 mb-0.5">총 수량</p>
-              <p class="text-lg font-black text-primary">{totalSelectedQty}<span class="text-xs font-medium ml-1 text-primary/70">개</span></p>
+              <p class="text-4xl font-black text-primary">{totalSelectedQty}<span class="text-sm font-medium ml-1 text-primary/70">개</span></p>
             </div>
           </div>
         </div>
@@ -285,44 +285,44 @@
       <!-- 숫자패드 영역 -->
       {#if editingItemId !== null}
         {@const editItem = store.laundryItems.find((i: LaundryItem) => i.id === editingItemId)}
-        <div class="px-4 py-3 border-b border-base-200 shrink-0">
+        <div class="px-6 py-5 border-b border-base-200 shrink-0">
           <div class="flex items-center justify-between mb-2">
-            <p class="text-xs font-semibold text-base-content/40 uppercase tracking-wider">
+            <p class="text-sm font-bold text-base-content/40 uppercase tracking-wider">
               수량 입력 — <span class="text-primary font-bold normal-case">{editItem?.name}</span>
             </p>
             <span class="text-xs text-base-content/50">최대 {editItem?.counts.completed ?? 0}개</span>
           </div>
           <!-- 디스플레이 -->
-          <div class="h-12 rounded-lg bg-base-200 border-2 border-primary flex items-center px-4 mb-2">
-            <span class="text-2xl font-black text-base-content flex-1 text-right tracking-widest">
+          <div class="h-20 rounded-lg bg-base-200 border-2 border-primary flex items-center px-4 mb-2">
+            <span class="text-5xl font-black text-base-content flex-1 text-right tracking-widest">
               {numpadValue === '' ? '0' : numpadValue}
             </span>
             <span class="text-xs text-base-content/40 ml-2">개</span>
           </div>
           <!-- 숫자패드 그리드 -->
-          <div class="grid grid-cols-3 gap-1.5 select-none">
-            {#each (['7','8','9','4','5','6','1','2','3','0','back','clear'] as const) as key, i (i)}
+          <div class="grid grid-cols-3 gap-2 select-none">
+            {#each (['1','2','3','4','5','6','7','8','9','back','0','clear'] as const) as key, i (i)}
               {#if key === 'clear'}
                 <button type="button"
-                  class="h-12 rounded-lg font-bold text-lg btn btn-error btn-outline"
+                  class="h-20 rounded-lg font-black text-3xl btn btn-error btn-outline"
                   onclick={() => { numpadValue = ''; }}
                 >전체삭제</button>
               {:else if key === 'back'}
                 <button type="button"
-                  class="h-12 rounded-lg font-bold text-lg btn btn-ghost border border-base-300 flex items-center justify-center gap-1"
+                  class="h-20 rounded-lg font-black text-3xl btn btn-ghost border border-base-300 flex items-center justify-center gap-1"
                   onclick={() => { numpadValue = numpadValue.slice(0, -1); }}
                 >
                   <Icon icon="heroicons:backspace" class="w-5 h-5" />
                 </button>
               {:else}
                 <button type="button"
-                  class="h-12 rounded-lg font-bold text-lg btn btn-ghost border border-base-300 bg-base-100 hover:bg-base-200"
+                  class="h-20 rounded-lg font-black text-3xl btn btn-ghost border border-base-300 bg-base-100 hover:bg-base-200"
                   onclick={() => { if (numpadValue.length < 6) numpadValue = numpadValue + key; }}
                 >{key}</button>
               {/if}
             {/each}
             <button type="button"
-              class="h-12 rounded-lg font-bold text-lg btn btn-primary col-span-3 mt-1"
+              class="h-20 rounded-lg font-black text-xl btn btn-primary col-span-3 mt-1"
               onclick={() => handleNumpadConfirm(numpadValue)}
             >확인</button>
           </div>
@@ -336,15 +336,15 @@
     <div class="px-4 pt-3 pb-4 border-t border-base-200 space-y-2 shrink-0">
       <!-- 출고 일시 -->
       <div class="pb-2 border-b border-base-200">
-        <p class="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-1.5">출고 일시</p>
+        <p class="text-sm font-bold text-base-content/40 uppercase tracking-wider mb-1.5">출고 일시</p>
         <button
           type="button"
-          class="h-9 px-3 w-full rounded-lg border border-base-300 bg-base-100 text-sm font-bold text-base-content hover:bg-base-200 transition-colors text-left"
+          class="h-14 px-3 w-full rounded-lg border border-base-300 bg-base-100 text-lg font-bold text-base-content hover:bg-base-200 transition-colors text-left"
           onclick={() => showShippedAtPicker = true}
         >{shippedAtLocal.replace('T', ' ')}</button>
       </div>
       <button
-        class="btn btn-primary w-full h-12 font-bold
+        class="btn btn-primary w-full h-20 text-xl font-black
           {selectedEntries.length === 0 ? 'btn-disabled opacity-40' : 'shadow-sm'}"
         disabled={selectedEntries.length === 0}
         onclick={() => { confirmShipout(); void goto('/history'); }}
@@ -357,7 +357,7 @@
         {/if}
       </button>
       <button
-        class="btn btn-ghost w-full font-bold text-sm text-base-content/40 border border-base-200"
+        class="btn btn-ghost w-full font-bold text-base text-base-content/40 border border-base-200"
         onclick={() => void goto('/')}
       >취소</button>
     </div>
