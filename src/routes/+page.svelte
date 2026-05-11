@@ -30,9 +30,7 @@
     return `${label}-${genId().slice(0, 4).toUpperCase()}`;
   }
 
-  let previewName = $derived(
-    `${CAT_LIST.find(c => c.key === modalCategory)?.label ?? modalCategory}-????`
-  );
+  let previewName = $derived(generateItemName(modalCategory));
 
   // 기록 드로어
   let showLogDrawer = $state(false);
