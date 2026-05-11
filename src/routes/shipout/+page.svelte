@@ -458,7 +458,7 @@
             {:else}
               <button type="button"
                 class="h-20 rounded-xl font-black text-3xl btn btn-ghost bg-base-100 border border-base-300 shadow-sm text-base-content active:scale-95"
-                onclick={() => { if (numpadValue.length < 6) numpadValue = numpadValue + key; }}
+                onclick={() => { const v = (numpadValue + key).replace(/^0+(?=\d)/, ''); if (v.length <= 6) numpadValue = v; }}
               >{key}</button>
             {/if}
           {/each}

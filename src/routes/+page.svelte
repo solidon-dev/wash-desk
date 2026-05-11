@@ -61,12 +61,26 @@
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   });
 
-  let logEntries = $derived((): CompletedLogEntry[] => {
+  // 기록 드로어: 전체 기록 최신순, 무한스크롤
+  const LOG_PAGE_SIZE = 20;
+  let logVisibleCount = $state(LOG_PAGE_SIZE);
+
+  let allLogEntries = $derived((): CompletedLogEntry[] => {
     if (!logTargetItem) return [];
     return store.completedLogs
-      .filter((l: CompletedLogEntry) => l.clientId === logTargetItem!.clientId)
-      .filter((e: CompletedLogEntry) => e.laundryItemId === logTargetItem!.id && e.date === todayStr());
+      .filter((e: CompletedLogEntry) => e.laundryItemId === logTargetItem!.id)
+      .sort((a: CompletedLogEntry, b: CompletedLogEntry) => b.createdAt.localeCompare(a.createdAt));
   });
+
+  let logEntries = $derived((): CompletedLogEntry[] => {
+    return allLogEntries().slice(0, logVisibleCount);
+  });
+
+  let hasMoreLogs = $derived(logVisibleCount < allLogEntries().length);
+
+  function loadMoreLogs() {
+    logVisibleCount += LOG_PAGE_SIZE;
+  }
 
   // ── 조작 함수 ────────────────────────────────────────────────────
   function selectCategory(cat: CategoryKey) {
@@ -95,6 +109,7 @@
 
   function openLogDrawer(item: LaundryItem) {
     logTargetItem = item;
+    logVisibleCount = LOG_PAGE_SIZE;
     showLogDrawer = true;
   }
 
@@ -314,7 +329,7 @@
                 <button
                   type="button"
                   class="h-24 rounded-xl font-black text-3xl btn btn-ghost bg-base-100 border border-base-300 shadow-sm text-base-content active:scale-95"
-                  onclick={() => { if (inputValue.length < 6) inputValue = inputValue + key; }}
+                  onclick={() => { const v = (inputValue + key).replace(/^0+(?=\d)/, ''); if (v.length <= 6) inputValue = v; }}
                 >{key}</button>
               {/if}
             {/each}
@@ -416,7 +431,7 @@
                 <Icon icon="heroicons:backspace" class="w-6 h-6" />
               </button>
             {:else}
-              <button type="button" class="h-16 rounded-lg font-black text-2xl btn btn-ghost bg-base-100 border border-base-300 shadow-sm text-base-content active:scale-95" onclick={() => { if (inputValue.length < 6) inputValue = inputValue + key; }}>{key}</button>
+              <button type="button" class="h-16 rounded-lg font-black text-2xl btn btn-ghost bg-base-100 border border-base-300 shadow-sm text-base-content active:scale-95" onclick={() => { const v = (inputValue + key).replace(/^0+(?=\d)/, ''); if (v.length <= 6) inputValue = v; }}>{key}</button>
             {/if}
           {/each}
         </div>
@@ -575,18 +590,23 @@
 
     <!-- 기록 목록 -->
     <div class="flex-1 overflow-y-auto">
-      {#if logEntries().length === 0}
+      {#if allLogEntries().length === 0}
         <div class="flex flex-col items-center justify-center h-full text-base-content/20 gap-3">
           <Icon icon="heroicons:clock" class="w-16 h-16 opacity-40" />
-          <p class="text-xl font-bold">오늘 기록이 없습니다</p>
+          <p class="text-xl font-bold">기록이 없습니다</p>
         </div>
       {:else}
+        <!-- 전체 건수 -->
+        <div class="px-8 py-3 bg-base-200/50 border-b border-base-300">
+          <p class="text-sm font-bold text-base-content/40">전체 {allLogEntries().length}건 · 최근 {logEntries().length}건 표시</p>
+        </div>
         {#each logEntries() as entry (entry.id)}
           <div class="px-8 py-5 border-b border-base-200 hover:bg-base-200/40 transition-colors">
             <div class="grid grid-cols-4 gap-2 items-center">
               <!-- 시각 -->
               <div>
-                <span class="text-xl font-black text-base-content tabular-nums">{formatTime(entry.createdAt)}</span>
+                <span class="text-lg font-black text-base-content tabular-nums block">{formatTime(entry.createdAt)}</span>
+                <span class="text-xs font-bold text-base-content/30 tabular-nums">{entry.date}</span>
               </div>
               <!-- 이전 -->
               <div class="text-center">
@@ -603,6 +623,23 @@
             </div>
           </div>
         {/each}
+        <!-- 더보기 -->
+        {#if hasMoreLogs}
+          <div class="px-8 py-6">
+            <button
+              type="button"
+              class="btn btn-ghost w-full h-16 text-lg font-black border border-base-300 text-base-content/50"
+              onclick={loadMoreLogs}
+            >
+              <Icon icon="heroicons:arrow-down" class="w-5 h-5" />
+              더 보기 ({allLogEntries().length - logVisibleCount}건 더)
+            </button>
+          </div>
+        {:else if allLogEntries().length > LOG_PAGE_SIZE}
+          <div class="px-8 py-5 text-center">
+            <p class="text-sm font-bold text-base-content/30">전체 {allLogEntries().length}건 모두 표시되었습니다</p>
+          </div>
+        {/if}
       {/if}
     </div>
   </div>
