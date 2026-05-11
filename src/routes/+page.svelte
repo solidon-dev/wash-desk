@@ -250,14 +250,18 @@
 
             <!-- 체크 인디케이터 -->
             <div class="w-14 shrink-0 flex items-center justify-center">
-              <div class="w-10 h-10 rounded-full border-2 transition-all duration-150 flex items-center justify-center
-                {isSel
-                  ? 'bg-primary border-primary'
-                  : 'border-base-300 bg-base-100'}">
+              <button
+                type="button"
+                class="w-10 h-10 rounded-full border-2 transition-all duration-150 flex items-center justify-center
+                  {isSel
+                    ? 'bg-primary border-primary'
+                    : 'border-base-300 bg-base-100 hover:border-primary'}"
+                onclick={() => toggleItem(item.id)}
+              >
                 {#if isSel}
                   <Icon icon="heroicons:check" class="w-6 h-6 text-primary-content" />
                 {/if}
-              </div>
+              </button>
             </div>
           </div>
         {/each}
