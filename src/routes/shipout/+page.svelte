@@ -456,7 +456,7 @@
             {#if key === 'clear'}
               <button type="button"
                 class="h-20 rounded-xl font-black text-2xl btn btn-error btn-outline active:scale-95"
-                onclick={() => { numpadValue = ''; }}
+                onclick={() => { numpadValue = ''; numpadClamped = false; }}
               >C</button>
             {:else if key === 'back'}
               <button type="button"
