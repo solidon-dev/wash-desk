@@ -583,7 +583,7 @@
       <div class="flex-1 grid grid-cols-4 gap-2 text-sm font-black text-base-content/40 uppercase tracking-wider">
         <div class="col-span-1">시각</div>
         <div class="text-center text-base-content/40">이전</div>
-        <div class="text-center text-success">추가</div>
+        <div class="text-center">변동</div>
         <div class="text-center text-primary">결과</div>
       </div>
     </div>
@@ -612,9 +612,13 @@
               <div class="text-center">
                 <span class="text-4xl font-black text-base-content/40 tabular-nums">{entry.before}</span>
               </div>
-              <!-- 추가 -->
+              <!-- 변동 -->
               <div class="text-center">
-                <span class="text-4xl font-black text-success tabular-nums">+{entry.delta}</span>
+                {#if entry.delta < 0}
+                  <span class="text-4xl font-black text-error tabular-nums">{entry.delta}</span>
+                {:else}
+                  <span class="text-4xl font-black text-success tabular-nums">+{entry.delta}</span>
+                {/if}
               </div>
               <!-- 결과 -->
               <div class="text-center">

@@ -184,15 +184,27 @@ export function addShipment(s: Omit<Shipment, 'id' | 'createdAt'>): Shipment {
 }
 
 export function applyShipout(clientId: string, items: { itemId: string; quantity: number }[]) {
+  const now = new Date().toISOString();
+  const date = todayYMD();
   for (const { itemId, quantity } of items) {
-    store.laundryItems = store.laundryItems.map(item => {
-      if (item.id !== itemId || item.clientId !== clientId) return item;
-      const nc = Math.max(0, item.counts.completed - quantity);
-      const ns = item.counts.shipped + quantity;
-      const c = { ...item.counts, completed: nc, shipped: ns };
+    const item = store.laundryItems.find(i => i.id === itemId && i.clientId === clientId);
+    if (!item) continue;
+    const before = item.counts.completed;
+    const nc = Math.max(0, before - quantity);
+    const actualDelta = nc - before; // 음수
+    store.laundryItems = store.laundryItems.map(i => {
+      if (i.id !== itemId || i.clientId !== clientId) return i;
+      const ns = i.counts.shipped + quantity;
+      const c = { ...i.counts, completed: nc, shipped: ns };
       c.stock = calcStock(c.completed);
-      return { ...item, counts: c, updatedAt: new Date().toISOString() };
+      return { ...i, counts: c, updatedAt: now };
     });
+    store.completedLogs = [...store.completedLogs, {
+      id: `log-${genId()}`, laundryItemId: itemId, clientId,
+      itemName: item.name, category: item.category as Exclude<LaundryCategory, 'all'>,
+      actionType: 'add', delta: actualDelta, before, after: nc,
+      createdAt: now, date,
+    }];
   }
 }
 
