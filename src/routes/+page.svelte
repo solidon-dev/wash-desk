@@ -281,17 +281,11 @@
               <span class="text-5xl font-black text-base-content">{currentCompleted}</span>
               <span class="text-sm font-bold text-base-content/30">개</span>
             </div>
-            <!-- 오른쪽: 입력값 미리보기 -->
+            <!-- 오른쪽: 입력값 표시 -->
             <div class="rounded-2xl border-2 border-success/60 bg-success/5 flex flex-col items-center justify-center gap-1">
-              {#if inputNum !== null && !isNaN(inputNum)}
-                <span class="text-xs font-bold text-success/70 uppercase tracking-wider">+ {inputNum} = 결과</span>
-                <span class="text-5xl font-black text-success">{previewResult()}</span>
-                <span class="text-sm font-bold text-success/50">개</span>
-              {:else}
-                <span class="text-xs font-bold text-base-content/30 uppercase tracking-wider">입력</span>
-                <span class="text-5xl font-black text-base-content/20 tracking-widest">{inputValue || '—'}</span>
-                <span class="text-sm font-bold text-base-content/20">개</span>
-              {/if}
+              <span class="text-xs font-bold text-base-content/30 uppercase tracking-wider">입력</span>
+              <span class="text-5xl font-black {inputValue ? 'text-success' : 'text-base-content/20'} tracking-widest">{inputValue || '—'}</span>
+              <span class="text-sm font-bold text-base-content/20">개</span>
             </div>
           </div>
 
@@ -331,10 +325,7 @@
             onclick={applyInput}
           >
             <Icon icon="heroicons:plus" class="w-7 h-7" />
-            추가 적용
-            {#if inputValue !== '' && inputNum !== null && !isNaN(inputNum)}
-              <span class="text-base font-normal opacity-80 ml-1">→ {previewResult()}개</span>
-            {/if}
+            +추가 적용
           </button>
 
         </div>
