@@ -2,7 +2,7 @@
   import Icon from '@iconify/svelte';
   import {
     store, selectClient, getItemsByCategory, getTotalCompleted,
-    addCompleted, setCompleted, addLaundryItemType, addLaundryItemTypeToAll,
+    addCompleted, setCompleted, addLaundryItemType,
     CATEGORY_LABELS, genId, todayYMD,
     type LaundryItem, type LaundryCategory, type CompletedLogEntry,
   } from '$lib/store.svelte';
@@ -16,7 +16,6 @@
 
   // 품목 추가 모달
   let showAddModal = $state(false);
-  let modalScope = $state<'this' | 'all'>('this');
   let modalCategory = $state<'towel' | 'sheet' | 'uniform'>('towel');
 
   const CAT_LIST: { key: 'towel' | 'sheet' | 'uniform'; label: string }[] = [
@@ -132,7 +131,6 @@
 
   function openAddModal() {
     modalCategory = 'towel';
-    modalScope = 'this';
     showAddModal = true;
   }
 
@@ -141,13 +139,9 @@
   }
 
   function submitAddItem() {
+    if (!store.selectedClientId) return;
     const name = generateItemName(modalCategory);
-    if (modalScope === 'this') {
-      if (!store.selectedClientId) return;
-      addLaundryItemType(store.selectedClientId, modalCategory, name);
-    } else {
-      addLaundryItemTypeToAll(modalCategory, name);
-    }
+    addLaundryItemType(store.selectedClientId, modalCategory, name);
     closeAddModal();
   }
 
@@ -510,20 +504,6 @@
           <span class="text-sm font-semibold text-base-content/50 shrink-0">등록될 이름</span>
           <span class="text-lg font-black text-base-content flex-1 truncate">{previewName}</span>
           <span class="badge badge-neutral badge-sm">자동생성</span>
-        </div>
-
-        <!-- 적용 범위 -->
-        <div class="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            class="btn {modalScope === 'this' ? 'btn-primary' : 'btn-outline'} h-12 text-base font-bold"
-            onclick={() => { modalScope = 'this'; }}
-          >이 거래처만</button>
-          <button
-            type="button"
-            class="btn {modalScope === 'all' ? 'btn-warning' : 'btn-outline'} h-12 text-base font-bold"
-            onclick={() => { modalScope = 'all'; }}
-          >모든 거래처</button>
         </div>
 
         <!-- 추가 버튼 -->
