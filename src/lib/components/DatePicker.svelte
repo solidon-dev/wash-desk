@@ -108,52 +108,52 @@
     aria-label="닫기"
   >
     <div
-      class="bg-base-100 rounded-2xl shadow-2xl w-80 overflow-hidden"
+      class="bg-base-100 rounded-2xl shadow-2xl w-[520px] overflow-hidden"
       role="dialog" aria-modal="true"
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => e.stopPropagation()}
       tabindex="-1"
     >
       <!-- 헤더 -->
-      <div class="px-4 py-3 border-b border-base-200 flex items-center justify-between">
-        <span class="text-xs font-bold text-base-content/40">{headerLabel[target] ?? '날짜 선택'}</span>
-        <button type="button" class="btn btn-ghost btn-xs btn-circle" onclick={onclose}>
-          <Icon icon="heroicons:x-mark" class="w-3.5 h-3.5" />
+      <div class="px-6 py-5 border-b border-base-200 flex items-center justify-between">
+        <span class="text-xl font-black text-base-content">{headerLabel[target] ?? '날짜 선택'}</span>
+        <button type="button" class="btn btn-ghost btn-md btn-circle" onclick={onclose}>
+          <Icon icon="heroicons:x-mark" class="w-6 h-6" />
         </button>
       </div>
 
       <!-- 연/월 네비게이션 -->
-      <div class="px-4 pt-3 pb-1 flex items-center justify-between">
-        <div class="flex items-center gap-1">
-          <button type="button" class="btn btn-ghost btn-xs btn-square" onclick={() => pickerYear -= 1}>
-            <Icon icon="heroicons:chevron-left" class="w-3.5 h-3.5" />
+      <div class="px-6 pt-5 pb-2 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <button type="button" class="btn btn-ghost btn-md btn-square" onclick={() => pickerYear -= 1}>
+            <Icon icon="heroicons:chevron-left" class="w-6 h-6" />
           </button>
-          <span class="text-sm font-black w-14 text-center">{pickerYear}년</span>
-          <button type="button" class="btn btn-ghost btn-xs btn-square" onclick={() => pickerYear += 1}>
-            <Icon icon="heroicons:chevron-right" class="w-3.5 h-3.5" />
+          <span class="text-2xl font-black w-24 text-center">{pickerYear}년</span>
+          <button type="button" class="btn btn-ghost btn-md btn-square" onclick={() => pickerYear += 1}>
+            <Icon icon="heroicons:chevron-right" class="w-6 h-6" />
           </button>
         </div>
-        <div class="flex items-center gap-1">
-          <button type="button" class="btn btn-ghost btn-xs btn-square" onclick={prevMonth}>
-            <Icon icon="heroicons:chevron-left" class="w-3.5 h-3.5" />
+        <div class="flex items-center gap-2">
+          <button type="button" class="btn btn-ghost btn-md btn-square" onclick={prevMonth}>
+            <Icon icon="heroicons:chevron-left" class="w-6 h-6" />
           </button>
-          <span class="text-sm font-black w-10 text-center">{MONTH_NAMES[pickerMonth]}</span>
-          <button type="button" class="btn btn-ghost btn-xs btn-square" onclick={nextMonth}>
-            <Icon icon="heroicons:chevron-right" class="w-3.5 h-3.5" />
+          <span class="text-2xl font-black w-16 text-center">{MONTH_NAMES[pickerMonth]}</span>
+          <button type="button" class="btn btn-ghost btn-md btn-square" onclick={nextMonth}>
+            <Icon icon="heroicons:chevron-right" class="w-6 h-6" />
           </button>
         </div>
       </div>
 
       <!-- 요일 헤더 -->
-      <div class="grid grid-cols-7 px-3 pb-1">
+      <div class="grid grid-cols-7 px-4 pb-1">
         {#each DAY_NAMES as dn, i (dn)}
-          <div class="text-center text-[10px] font-bold py-1
+          <div class="text-center text-base font-black py-2
             {i === 0 ? 'text-error' : i === 6 ? 'text-info' : 'text-base-content/30'}">{dn}</div>
         {/each}
       </div>
 
       <!-- 날짜 그리드 -->
-      <div class="grid grid-cols-7 px-3 pb-3 gap-y-0.5">
+      <div class="grid grid-cols-7 px-4 pb-5 gap-y-1">
         {#each pickerDays() as cell, i (i)}
           {#if cell === null}
             <div></div>
@@ -164,7 +164,7 @@
             {@const dow = new Date(pickerYear, pickerMonth, cell).getDay()}
             <button
               type="button"
-              class="h-8 w-full rounded-lg text-sm font-bold transition-colors
+              class="h-14 w-full rounded-xl text-xl font-black transition-colors
                 {isSelected
                   ? 'bg-primary text-primary-content'
                   : isInRange
@@ -182,31 +182,31 @@
 
       <!-- 시간 선택 (datetime 모드) -->
       {#if mode === 'datetime'}
-        <div class="px-4 pb-3 border-t border-base-200 pt-3 flex items-center justify-center gap-3">
-          <div class="flex items-center gap-1">
-            <button type="button" class="btn btn-ghost btn-xs btn-square" onclick={() => pickerHour = (pickerHour + 23) % 24}>
-              <Icon icon="heroicons:chevron-left" class="w-3.5 h-3.5" />
+        <div class="px-6 pb-4 border-t border-base-200 pt-5 flex items-center justify-center gap-4">
+          <div class="flex items-center gap-2">
+            <button type="button" class="btn btn-ghost btn-md btn-square" onclick={() => pickerHour = (pickerHour + 23) % 24}>
+              <Icon icon="heroicons:chevron-left" class="w-6 h-6" />
             </button>
-            <span class="text-xl font-black w-10 text-center tabular-nums">{pad(pickerHour)}</span>
-            <button type="button" class="btn btn-ghost btn-xs btn-square" onclick={() => pickerHour = (pickerHour + 1) % 24}>
-              <Icon icon="heroicons:chevron-right" class="w-3.5 h-3.5" />
+            <span class="text-4xl font-black w-16 text-center tabular-nums">{pad(pickerHour)}</span>
+            <button type="button" class="btn btn-ghost btn-md btn-square" onclick={() => pickerHour = (pickerHour + 1) % 24}>
+              <Icon icon="heroicons:chevron-right" class="w-6 h-6" />
             </button>
           </div>
-          <span class="text-lg font-black text-base-content/40">:</span>
-          <div class="flex items-center gap-1">
-            <button type="button" class="btn btn-ghost btn-xs btn-square" onclick={() => pickerMin = (pickerMin + 55) % 60}>
-              <Icon icon="heroicons:chevron-left" class="w-3.5 h-3.5" />
+          <span class="text-4xl font-black text-base-content/40">:</span>
+          <div class="flex items-center gap-2">
+            <button type="button" class="btn btn-ghost btn-md btn-square" onclick={() => pickerMin = (pickerMin + 55) % 60}>
+              <Icon icon="heroicons:chevron-left" class="w-6 h-6" />
             </button>
-            <span class="text-xl font-black w-10 text-center tabular-nums">{pad(pickerMin)}</span>
-            <button type="button" class="btn btn-ghost btn-xs btn-square" onclick={() => pickerMin = (pickerMin + 5) % 60}>
-              <Icon icon="heroicons:chevron-right" class="w-3.5 h-3.5" />
+            <span class="text-4xl font-black w-16 text-center tabular-nums">{pad(pickerMin)}</span>
+            <button type="button" class="btn btn-ghost btn-md btn-square" onclick={() => pickerMin = (pickerMin + 5) % 60}>
+              <Icon icon="heroicons:chevron-right" class="w-6 h-6" />
             </button>
           </div>
         </div>
-        <div class="px-4 pb-4">
+        <div class="px-6 pb-6">
           <button
             type="button"
-            class="btn btn-primary w-full font-bold"
+            class="btn btn-primary w-full h-16 text-xl font-black"
             onclick={confirmDatetime}
           >확인</button>
         </div>
