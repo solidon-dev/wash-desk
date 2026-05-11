@@ -157,12 +157,12 @@
   <div class="flex-1 flex flex-col min-h-0 min-w-0 bg-base-100">
 
     <!-- 카테고리 탭 바 -->
-    <div class="h-10 bg-base-100 border-b border-base-300 px-2 shrink-0 flex items-center gap-1">
+    <div class="h-14 bg-base-100 border-b border-base-300 px-2 shrink-0 flex items-center gap-1">
       {#each categories as cat (cat.key)}
         {@const isActive = activeCategory === cat.key}
         <button
           type="button"
-          class="px-5 h-full text-sm font-semibold transition-colors rounded-none
+          class="px-6 h-full text-base font-bold transition-colors rounded-none
             {isActive
               ? 'bg-primary text-white'
               : 'text-base-content/50 hover:bg-base-200 hover:text-base-content'}"
@@ -176,24 +176,24 @@
     {#if store.selectedClientId}
       <button
         type="button"
-        class="w-full h-10 flex items-center justify-center gap-2 px-4 bg-primary/5 hover:bg-primary/10 text-primary transition-colors border-b border-primary/10 shrink-0"
+        class="w-full h-14 flex items-center justify-center gap-2 px-4 bg-primary/5 hover:bg-primary/10 text-primary transition-colors border-b border-primary/10 shrink-0"
         onclick={openAddModal}
       >
-        <Icon icon="heroicons:plus-circle" class="w-4 h-4" />
-        <span class="text-sm font-bold">품목 추가</span>
+        <Icon icon="heroicons:plus-circle" class="w-5 h-5" />
+        <span class="text-base font-bold">품목 추가</span>
       </button>
     {/if}
 
     {#if filteredItems.length > 0}
-      <div class="h-10 bg-base-200 border-b border-base-300 px-4 shrink-0 flex items-center">
+      <div class="h-14 bg-base-200 border-b border-base-300 px-4 shrink-0 flex items-center">
         <div class="flex-1 min-w-0">
-          <span class="text-xs font-semibold text-base-content/40 uppercase tracking-wider">품목명</span>
-        </div>
-        <div class="w-8 shrink-0"></div>
-        <div class="w-24 text-center shrink-0">
-          <span class="text-xs font-semibold text-base-content/40 uppercase tracking-wider">세탁완료</span>
+          <span class="text-sm font-bold text-base-content/40 uppercase tracking-wider">품목명</span>
         </div>
         <div class="w-10 shrink-0"></div>
+        <div class="w-32 text-center shrink-0">
+          <span class="text-sm font-bold text-base-content/40 uppercase tracking-wider">세탁완료</span>
+        </div>
+        <div class="w-12 shrink-0"></div>
       </div>
     {/if}
 
@@ -226,7 +226,7 @@
           {@const isSel = selectedItemId === item.id}
           {@const completed = item.counts.completed}
           <div
-            class="flex items-center min-h-14 px-4 border-b border-base-200 transition-colors border-l-2
+            class="flex items-center min-h-20 px-4 border-b border-base-200 transition-colors border-l-2
               {isSel ? 'bg-primary/5 border-l-primary' : 'border-l-transparent hover:bg-base-200/60'}"
           >
             <!-- 품목명 클릭 영역 -->
@@ -235,40 +235,40 @@
               class="flex-1 py-3 text-left min-w-0 h-full"
               onclick={() => toggleItem(item.id)}
             >
-              <span class="text-sm font-semibold truncate block
+              <span class="text-lg font-bold truncate block
                 {isSel ? 'text-primary' : 'text-base-content'}">
                 {item.name}
               </span>
             </button>
 
             <!-- 기록(시계) 버튼 -->
-            <div class="w-8 shrink-0 flex items-center justify-center">
+            <div class="w-10 shrink-0 flex items-center justify-center">
               <button
                 type="button"
-                class="btn btn-ghost btn-xs w-7 h-7 p-0 rounded-lg text-base-content/30 hover:text-base-content/70"
+                class="btn btn-ghost btn-sm w-9 h-9 p-0 rounded-lg text-base-content/30 hover:text-base-content/70"
                 onclick={(e) => { e.stopPropagation(); openLogDrawer(item); }}
                 title="기록 보기"
               >
-                <Icon icon="heroicons:clock" class="w-3.5 h-3.5" />
+                <Icon icon="heroicons:clock" class="w-5 h-5" />
               </button>
             </div>
 
             <!-- 세탁완료 수 -->
-            <div class="w-24 flex justify-center items-center shrink-0">
-              <span class="text-xl font-black
+            <div class="w-32 flex justify-center items-center shrink-0">
+              <span class="text-3xl font-black
                 {completed === 0 ? 'text-base-content/20' : 'text-success'}">
                 {completed}
               </span>
             </div>
 
             <!-- 체크 인디케이터 -->
-            <div class="w-10 shrink-0 flex items-center justify-center">
-              <div class="w-5 h-5 rounded-full border-2 transition-all duration-150 flex items-center justify-center
+            <div class="w-12 shrink-0 flex items-center justify-center">
+              <div class="w-8 h-8 rounded-full border-2 transition-all duration-150 flex items-center justify-center
                 {isSel
                   ? 'bg-primary border-primary'
                   : 'border-base-300 bg-base-100'}">
                 {#if isSel}
-                  <Icon icon="heroicons:check" class="w-3 h-3 text-primary-content" />
+                  <Icon icon="heroicons:check" class="w-5 h-5 text-primary-content" />
                 {/if}
               </div>
             </div>
