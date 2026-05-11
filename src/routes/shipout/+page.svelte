@@ -131,13 +131,32 @@
 
   let showMobilePanel = $state(false);
 
-  function confirmShipout() {
+  // 슬립 모달
+  let showSlipModal = $state(false);
+  let pendingShipment = $state<{ clientId: string; items: { laundryItemId: string; itemName: string; category: Exclude<LaundryCategory, 'all'>; quantity: number }[]; shippedAt: string } | null>(null);
+
+  function openSlipModal() {
     if (!store.selectedClientId || selectedEntries.length === 0) return;
     const shippedAt = new Date(shippedAtLocal).toISOString();
-    const shipItems = selectedEntries.map(e => ({ laundryItemId: e.itemId, itemName: e.itemName, category: e.category as Exclude<LaundryCategory, 'all'>, quantity: e.quantity }));
-    addShipment({ clientId: store.selectedClientId, items: shipItems, driverId: 'system', memo: undefined, shippedAt });
-    applyShipout(store.selectedClientId, selectedEntries.map(e => ({ itemId: e.itemId, quantity: e.quantity })));
+    pendingShipment = {
+      clientId: store.selectedClientId,
+      items: selectedEntries.map(e => ({ laundryItemId: e.itemId, itemName: e.itemName, category: e.category as Exclude<LaundryCategory, 'all'>, quantity: e.quantity })),
+      shippedAt,
+    };
+    showSlipModal = true;
   }
+
+  function executeShipout() {
+    if (!pendingShipment) return;
+    addShipment({ clientId: pendingShipment.clientId, items: pendingShipment.items, driverId: 'system', memo: undefined, shippedAt: pendingShipment.shippedAt });
+    applyShipout(pendingShipment.clientId, pendingShipment.items.map(i => ({ itemId: i.laundryItemId, quantity: i.quantity })));
+    showSlipModal = false;
+    pendingShipment = null;
+  }
+
+  function p(n: number) { return String(n).padStart(2, '0'); }
+  function formatDate(iso: string) { const d = new Date(iso); return `${d.getFullYear()}.${p(d.getMonth()+1)}.${p(d.getDate())}`; }
+  function formatTime(iso: string) { const d = new Date(iso); return `${p(d.getHours())}:${p(d.getMinutes())}`; }
 </script>
 
 <svelte:head><title>출고 확인</title></svelte:head>
@@ -306,7 +325,7 @@
         class="btn btn-primary w-full h-20 text-xl font-black
           {selectedEntries.length === 0 ? 'btn-disabled opacity-40' : 'shadow-sm'}"
         disabled={selectedEntries.length === 0}
-        onclick={() => { confirmShipout(); void goto('/history'); }}
+        onclick={openSlipModal}
       >
         {#if selectedEntries.length > 0}
           <Icon icon="heroicons:archive-box-arrow-down" class="w-6 h-6" />
@@ -394,7 +413,7 @@
     <div class="px-4 py-4 border-t border-base-200 space-y-2 shrink-0">
       <button
         class="btn btn-primary w-full h-12 font-bold shadow-sm"
-        onclick={() => { confirmShipout(); showMobilePanel = false; void goto('/history'); }}
+        onclick={() => { showMobilePanel = false; openSlipModal(); }}
       >
         <Icon icon="heroicons:archive-box-arrow-down" class="w-5 h-5" />
         출고 확인 ({totalSelectedQty}개)
@@ -478,6 +497,64 @@
           disabled={numpadValue === ''}
           onclick={() => handleNumpadConfirm(numpadValue)}
         >수량 확인</button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+{#if showSlipModal && pendingShipment}
+  {@const sc = store.clients.find(c => c.id === pendingShipment!.clientId)}
+  {@const slipTotal = pendingShipment.items.reduce((a, i) => a + i.quantity, 0)}
+  <div
+    class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+    role="button" tabindex="-1"
+    onclick={() => showSlipModal = false}
+    onkeydown={(e) => e.key === 'Escape' && (showSlipModal = false)}
+    aria-label="닫기"
+  >
+    <div
+      class="bg-base-100 rounded-2xl shadow-2xl w-96 flex flex-col max-h-[80vh] overflow-hidden"
+      role="dialog" aria-modal="true"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
+      tabindex="-1"
+    >
+      <div class="px-5 py-4 border-b border-base-200 flex items-center justify-between">
+        <span class="text-sm font-bold text-base-content">출고 전표 확인</span>
+        <button type="button" class="btn btn-ghost btn-xs btn-circle" onclick={() => showSlipModal = false}>
+          <Icon icon="heroicons:x-mark" class="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto" id="slip-print-area">
+        <div class="text-center border-b border-base-200 pb-4">
+          <p class="text-lg font-black text-base-content">출고 전표</p>
+          <p class="text-xs text-base-content/40 mt-1">{formatDate(pendingShipment.shippedAt)} {formatTime(pendingShipment.shippedAt)}</p>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-base-content/50">거래처</span>
+          <span class="font-bold text-base-content">{sc?.name ?? '미확인'}</span>
+        </div>
+        <div class="border-t border-base-200 pt-3 space-y-2">
+          {#each pendingShipment.items as item (item.laundryItemId)}
+            <div class="flex justify-between text-sm">
+              <span class="text-base-content">{item.itemName}</span>
+              <span class="font-bold tabular-nums">{item.quantity}개</span>
+            </div>
+          {/each}
+        </div>
+        <div class="border-t-2 border-base-content pt-3 flex justify-between">
+          <span class="text-sm font-bold">합계</span>
+          <span class="text-lg font-black tabular-nums">{slipTotal}개</span>
+        </div>
+      </div>
+
+      <div class="px-5 py-4 border-t border-base-200 flex gap-2">
+        <button class="btn btn-ghost flex-1 font-bold border border-base-300" onclick={() => showSlipModal = false}>취소</button>
+        <button class="btn btn-primary flex-1 font-bold" onclick={executeShipout}>
+          <Icon icon="heroicons:archive-box-arrow-down" class="w-4 h-4" />
+          출고 확인
+        </button>
       </div>
     </div>
   </div>
