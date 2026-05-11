@@ -30,6 +30,10 @@
     return `${label}-${genId().slice(0, 4).toUpperCase()}`;
   }
 
+  let previewName = $derived(
+    `${CAT_LIST.find(c => c.key === modalCategory)?.label ?? modalCategory}-????`
+  );
+
   // 기록 드로어
   let showLogDrawer = $state(false);
   let logTargetItem = $state<LaundryItem | null>(null);
@@ -476,47 +480,50 @@
     aria-label="닫기"
   >
     <div
-      class="bg-base-100 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+      class="bg-base-100 rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-lg overflow-hidden"
       role="dialog" aria-modal="true"
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => e.stopPropagation()}
       tabindex="-1"
     >
-      <div class="px-6 py-5 bg-primary flex items-center justify-between">
-        <span class="text-2xl font-black text-primary-content">품목 추가</span>
-        <button type="button" class="btn btn-ghost btn-circle text-primary-content/70" onclick={closeAddModal}>
-          <Icon icon="heroicons:x-mark" class="w-6 h-6" />
+      <div class="px-6 py-4 border-b border-base-200 flex items-center justify-between">
+        <span class="text-xl font-black text-base-content">품목 추가</span>
+        <button type="button" class="btn btn-ghost btn-sm btn-circle" onclick={closeAddModal}>
+          <Icon icon="heroicons:x-mark" class="w-5 h-5" />
         </button>
       </div>
 
-      <div class="p-6 flex flex-col gap-5">
+      <div class="p-6 flex flex-col gap-4">
 
         <!-- 카테고리 선택 스크롤 리스트 -->
-        <div class="h-64 overflow-y-auto rounded-xl border border-base-300 flex flex-col">
+        <div class="h-56 overflow-y-auto rounded-xl border border-base-300">
           {#each CAT_LIST as cat (cat.key)}
             <button
               type="button"
-              class="px-5 py-5 text-left text-xl font-bold border-b border-base-200 last:border-b-0 transition-all
-                {modalCategory === cat.key
-                  ? 'bg-primary text-primary-content'
-                  : 'hover:bg-base-200 text-base-content'}"
+              class="w-full px-5 py-4 text-left text-lg font-bold border-b border-base-200 last:border-b-0 transition-colors
+                {modalCategory === cat.key ? 'bg-primary text-primary-content' : 'hover:bg-base-200 text-base-content'}"
               onclick={() => { modalCategory = cat.key; }}
             >{cat.label}</button>
           {/each}
         </div>
 
+        <!-- 품목명 미리보기 -->
+        <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-base-200">
+          <span class="text-sm font-semibold text-base-content/50 shrink-0">등록될 이름</span>
+          <span class="text-lg font-black text-base-content flex-1 truncate">{previewName}</span>
+          <span class="badge badge-neutral badge-sm">자동생성</span>
+        </div>
+
         <!-- 적용 범위 -->
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-2">
           <button
             type="button"
-            class="h-14 rounded-xl border-2 font-black text-lg transition-all
-              {modalScope === 'this' ? 'border-primary bg-primary text-primary-content' : 'border-base-300 bg-base-100 text-base-content/50 hover:border-primary/50'}"
+            class="btn {modalScope === 'this' ? 'btn-primary' : 'btn-outline'} h-12 text-base font-bold"
             onclick={() => { modalScope = 'this'; }}
           >이 거래처만</button>
           <button
             type="button"
-            class="h-14 rounded-xl border-2 font-black text-lg transition-all
-              {modalScope === 'all' ? 'border-warning bg-warning text-warning-content' : 'border-base-300 bg-base-100 text-base-content/50 hover:border-warning/50'}"
+            class="btn {modalScope === 'all' ? 'btn-warning' : 'btn-outline'} h-12 text-base font-bold"
             onclick={() => { modalScope = 'all'; }}
           >모든 거래처</button>
         </div>
@@ -524,7 +531,7 @@
         <!-- 추가 버튼 -->
         <button
           type="button"
-          class="btn btn-primary w-full h-16 text-xl font-black"
+          class="btn btn-primary w-full h-14 text-lg font-black"
           onclick={submitAddItem}
         >품목 추가하기</button>
       </div>
