@@ -16,6 +16,7 @@
   let quantities = new SvelteMap<string, number>();
   let editingItemId = $state<string | null>(null);
   let numpadValue = $state('');
+  let numpadClamped = $state(false);
   let showNumpadModal = $state(false);
 
   function toLocalDatetimeValue(d: Date): string {
@@ -106,6 +107,7 @@
   function openNumpad(itemId: string) {
     editingItemId = itemId;
     numpadValue = String(quantities.get(itemId) ?? 0);
+    numpadClamped = false;
     showNumpadModal = true;
   }
 
@@ -113,17 +115,18 @@
     showNumpadModal = false;
     editingItemId = null;
     numpadValue = '';
+    numpadClamped = false;
   }
 
   function handleNumpadConfirm(val: string) {
     if (!editingItemId) return;
     const n = parseInt(val, 10);
-    if (isNaN(n) || n < 0) { editingItemId = null; numpadValue = ''; return; }
+    if (isNaN(n) || n < 0) { editingItemId = null; numpadValue = ''; numpadClamped = false; return; }
     const item = store.laundryItems.find((i: LaundryItem) => i.id === editingItemId);
     const clamped = Math.min(n, item?.counts.completed ?? 0);
     if (clamped === 0) { selectedItemIds.delete(editingItemId); quantities.delete(editingItemId); }
     else quantities.set(editingItemId, clamped);
-    editingItemId = null; numpadValue = ''; showNumpadModal = false;
+    editingItemId = null; numpadValue = ''; numpadClamped = false; showNumpadModal = false;
   }
 
   let showMobilePanel = $state(false);
@@ -437,10 +440,14 @@
             <span class="text-5xl font-black text-base-content">{maxQty}</span>
             <span class="text-sm font-bold text-base-content/30">개</span>
           </div>
-          <div class="rounded-2xl border-2 border-primary/60 bg-primary/5 flex flex-col items-center justify-center gap-1">
+          <div class="rounded-2xl border-2 border-primary/60 bg-primary/5 flex flex-col items-center justify-center gap-1 relative">
             <span class="text-xs font-bold text-base-content/30 uppercase tracking-wider">입력</span>
             <span class="text-5xl font-black tracking-widest {numpadValue ? 'text-primary' : 'text-base-content/20'}">{numpadValue || '—'}</span>
-            <span class="text-sm font-bold text-base-content/20">개</span>
+            {#if numpadClamped}
+              <span class="text-xs font-bold text-warning">⚠️ 최대 {maxQty}개로 조정됨</span>
+            {:else}
+              <span class="text-sm font-bold text-base-content/20">개</span>
+            {/if}
           </div>
         </div>
 
@@ -461,7 +468,7 @@
             {:else}
               <button type="button"
                 class="h-20 rounded-xl font-black text-3xl btn btn-ghost bg-base-100 border border-base-300 shadow-sm text-base-content active:scale-95"
-                onclick={() => { const v = (numpadValue + key).replace(/^0+(?=\d)/, ''); const n = parseInt(v, 10); numpadValue = (!isNaN(n) && n > maxQty) ? String(maxQty) : (v.length <= 6 ? v : numpadValue); }}
+                onclick={() => { const v = (numpadValue + key).replace(/^0+(?=\d)/, ''); const n = parseInt(v, 10); if (!isNaN(n) && n > maxQty) { numpadValue = String(maxQty); numpadClamped = true; } else if (v.length <= 6) { numpadValue = v; numpadClamped = false; } }}
               >{key}</button>
             {/if}
           {/each}
