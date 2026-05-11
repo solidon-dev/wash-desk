@@ -294,15 +294,6 @@
               {/if}
             </div>
           </div>
-          <!-- 선택 해제 버튼 -->
-          <button
-            type="button"
-            class="mt-3 w-full h-9 rounded-xl btn btn-ghost text-sm text-base-content/40 border border-base-200"
-            onclick={() => { selectedItemId = null; inputValue = ''; }}
-          >
-            <Icon icon="heroicons:x-mark" class="w-4 h-4" />
-            {selectedItem.name} 선택 해제
-          </button>
         </div>
 
         <!-- 숫자패드 -->
