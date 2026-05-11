@@ -550,13 +550,10 @@
   <!-- 드로어 패널 -->
   <div class="fixed top-0 right-0 h-full w-1/2 bg-base-100 shadow-2xl z-50 flex flex-col animate-slide-in">
     <!-- 드로어 헤더 -->
-    <div class="px-8 py-6 bg-primary shrink-0 flex items-start justify-between">
-      <div class="flex-1 min-w-0 mr-3">
-        <h3 class="text-2xl font-bold text-primary-content truncate">
-          {logTargetItem?.name ?? ''} 기록
-        </h3>
-        <p class="text-sm text-primary-content/60 mt-0.5">오늘 처리 내역</p>
-      </div>
+    <div class="px-8 py-6 bg-primary shrink-0 flex items-center justify-between">
+      <h3 class="text-2xl font-black text-primary-content truncate">
+        {logTargetItem?.name ?? ''} 기록
+      </h3>
       <button
         type="button"
         class="btn btn-ghost btn-md btn-circle text-primary-content/70 hover:text-primary-content"
@@ -566,17 +563,13 @@
       </button>
     </div>
 
-    <!-- 안내 문구 -->
-    <div class="px-8 py-4 bg-warning/10 border-b border-warning/20 shrink-0">
-      <p class="text-base font-bold text-warning">오늘 날짜 기록만 표시됩니다. 수정 불가.</p>
-    </div>
-
-    <!-- 컬럼 헤더 -->
-    <div class="h-14 bg-base-200 border-b border-base-300 shrink-0 flex items-center px-8">
-      <div class="flex-1 grid grid-cols-4 gap-1 text-sm font-bold text-base-content/40 uppercase tracking-wider">
-        <div class="col-span-2">시각</div>
-        <div class="text-center">이전</div>
-        <div class="text-center">결과</div>
+    <!-- 컨럼 헤더 -->
+    <div class="h-16 bg-base-200 border-b border-base-300 shrink-0 flex items-center px-8">
+      <div class="flex-1 grid grid-cols-4 gap-2 text-sm font-black text-base-content/40 uppercase tracking-wider">
+        <div class="col-span-1">시각</div>
+        <div class="text-center text-base-content/40">이전</div>
+        <div class="text-center text-success">추가</div>
+        <div class="text-center text-primary">결과</div>
       </div>
     </div>
 
@@ -584,45 +577,33 @@
     <div class="flex-1 overflow-y-auto">
       {#if logEntries().length === 0}
         <div class="flex flex-col items-center justify-center h-full text-base-content/20 gap-3">
-          <Icon icon="heroicons:clock" class="w-14 h-14 opacity-40" />
-          <p class="text-sm font-semibold">오늘 기록이 없습니다</p>
+          <Icon icon="heroicons:clock" class="w-16 h-16 opacity-40" />
+          <p class="text-xl font-bold">오늘 기록이 없습니다</p>
         </div>
       {:else}
         {#each logEntries() as entry (entry.id)}
-          <div class="px-8 py-5 border-b border-base-200 hover:bg-base-200/60 transition-colors">
-            <div class="grid grid-cols-4 gap-1 items-center">
+          <div class="px-8 py-5 border-b border-base-200 hover:bg-base-200/40 transition-colors">
+            <div class="grid grid-cols-4 gap-2 items-center">
               <!-- 시각 -->
-              <div class="col-span-2">
-                <span class="text-lg font-bold text-base-content">{formatTime(entry.createdAt)}</span>
+              <div>
+                <span class="text-xl font-black text-base-content tabular-nums">{formatTime(entry.createdAt)}</span>
               </div>
               <!-- 이전 -->
               <div class="text-center">
-                <span class="text-2xl font-bold text-base-content/50">{entry.before}</span>
+                <span class="text-4xl font-black text-base-content/40 tabular-nums">{entry.before}</span>
+              </div>
+              <!-- 추가 -->
+              <div class="text-center">
+                <span class="text-4xl font-black text-success tabular-nums">+{entry.delta}</span>
               </div>
               <!-- 결과 -->
               <div class="text-center">
-                <span class="text-2xl font-bold
-                  {entry.after > entry.before ? 'text-success' : entry.after < entry.before ? 'text-error' : 'text-base-content/50'}">
-                  {entry.after}
-                </span>
+                <span class="text-4xl font-black text-primary tabular-nums">{entry.after}</span>
               </div>
             </div>
-            <!-- 서브 텍스트 -->
-            <p class="text-sm text-base-content/40 mt-0.5">
-              {entry.before} + {entry.delta} = {entry.after}
-            </p>
           </div>
         {/each}
       {/if}
-    </div>
-
-    <!-- 드로어 하단 -->
-    <div class="px-4 py-3 border-t border-base-200 shrink-0">
-      <button
-        type="button"
-        class="btn btn-lg h-auto w-full btn-ghost border border-base-300 text-base font-bold text-base-content/60"
-        onclick={closeLogDrawer}
-      >닫기</button>
     </div>
   </div>
 {/if}
