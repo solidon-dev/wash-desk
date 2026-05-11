@@ -324,7 +324,6 @@
             disabled={inputNum === null || isNaN(inputNum ?? NaN)}
             onclick={applyInput}
           >
-            <Icon icon="heroicons:plus" class="w-7 h-7" />
             +추가 적용
           </button>
 
