@@ -39,7 +39,8 @@
     store.selectedClientId ? getItemsByCategory(store.selectedClientId, activeCategory) : []
   );
   let isAllSelected = $derived(
-    filteredItems.length > 0 && (filteredItems as LaundryItem[]).every((item: LaundryItem) => selectedItemIds.has(item.id))
+    filteredItems.length > 0 && (filteredItems as LaundryItem[]).filter((i: LaundryItem) => i.counts.completed > 0).length > 0 &&
+    (filteredItems as LaundryItem[]).filter((i: LaundryItem) => i.counts.completed > 0).every((item: LaundryItem) => selectedItemIds.has(item.id))
   );
   let selectedEntries = $derived(
     [...selectedItemIds].flatMap((itemId: string) => {
@@ -74,13 +75,14 @@
   }
 
   function toggleSelectAll() {
+    const available = (filteredItems as LaundryItem[]).filter((i: LaundryItem) => i.counts.completed > 0);
     if (isAllSelected) {
       selectedItemIds.clear();
       quantities.clear();
       editingItemId = null;
       numpadValue = '';
     } else {
-      for (const item of filteredItems) {
+      for (const item of available) {
         selectedItemIds.add(item.id);
         quantities.set(item.id, item.counts.completed);
       }
@@ -220,15 +222,18 @@
         {#each filteredItems as item (item.id)}
           {@const isSel = selectedItemIds.has(item.id)}
           {@const qty = quantities.get(item.id) ?? item.counts.completed}
+          {@const isEmpty = item.counts.completed === 0}
           <div
             role="button"
-            tabindex="0"
-            class="flex items-center min-h-28 px-6 py-4 border-b border-base-200 transition-colors cursor-pointer
-              {isSel
-                ? 'bg-primary/5 border-l-2 border-l-primary'
-                : 'hover:bg-base-200/60 border-l-2 border-l-transparent'}"
-            onclick={() => toggleItem(item.id, item.counts.completed)}
-            onkeydown={(e) => e.key === 'Enter' && toggleItem(item.id, item.counts.completed)}
+            tabindex={isEmpty ? -1 : 0}
+            class="flex items-center min-h-28 px-6 py-4 border-b border-base-200 transition-colors border-l-2
+              {isEmpty
+                ? 'opacity-40 cursor-not-allowed border-l-transparent'
+                : isSel
+                  ? 'bg-primary/5 border-l-primary cursor-pointer'
+                  : 'hover:bg-base-200/60 border-l-transparent cursor-pointer'}"
+            onclick={() => !isEmpty && toggleItem(item.id, item.counts.completed)}
+            onkeydown={(e) => !isEmpty && e.key === 'Enter' && toggleItem(item.id, item.counts.completed)}
           >
             <!-- 품목명 -->
             <div class="flex-1 min-w-0">
@@ -266,7 +271,7 @@
             <!-- 체크 서클 -->
             <div class="w-14 shrink-0 flex justify-center">
               <div class="w-10 h-10 rounded-full border-2 transition-all duration-150 flex items-center justify-center
-                {isSel ? 'bg-primary border-primary' : 'border-base-content/30'}">
+                {isEmpty ? 'border-base-content/10' : isSel ? 'bg-primary border-primary' : 'border-base-content/30'}">
                 {#if isSel}
                   <Icon icon="heroicons:check" class="w-6 h-6 text-primary-content" />
                 {/if}
