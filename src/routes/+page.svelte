@@ -213,49 +213,49 @@
           {@const isSel = selectedItemId === item.id}
           {@const completed = item.counts.completed}
           <div
-            class="flex items-center min-h-20 px-4 border-b border-base-200 transition-colors border-l-2
+            class="flex items-center min-h-28 px-6 py-4 border-b border-base-200 transition-colors border-l-2
               {isSel ? 'bg-primary/5 border-l-primary' : 'border-l-transparent hover:bg-base-200/60'}"
           >
             <!-- 품목명 클릭 영역 -->
             <button
               type="button"
-              class="flex-1 py-3 text-left min-w-0 h-full"
+              class="flex-1 py-2 text-left min-w-0 h-full"
               onclick={() => toggleItem(item.id)}
             >
-              <span class="text-lg font-bold truncate block
+              <span class="text-2xl font-bold truncate block
                 {isSel ? 'text-primary' : 'text-base-content'}">
                 {item.name}
               </span>
             </button>
 
             <!-- 기록(시계) 버튼 -->
-            <div class="w-10 shrink-0 flex items-center justify-center">
+            <div class="w-14 shrink-0 flex items-center justify-center">
               <button
                 type="button"
-                class="btn btn-ghost btn-sm w-9 h-9 p-0 rounded-lg text-base-content/30 hover:text-base-content/70"
+                class="btn btn-ghost w-12 h-12 btn-md p-0 rounded-lg text-base-content/30 hover:text-base-content/70"
                 onclick={(e) => { e.stopPropagation(); openLogDrawer(item); }}
                 title="기록 보기"
               >
-                <Icon icon="heroicons:clock" class="w-5 h-5" />
+                <Icon icon="heroicons:clock" class="w-6 h-6" />
               </button>
             </div>
 
             <!-- 세탁완료 수 -->
-            <div class="w-32 flex justify-center items-center shrink-0">
-              <span class="text-3xl font-black
+            <div class="w-36 flex justify-center items-center shrink-0">
+              <span class="text-4xl font-black
                 {completed === 0 ? 'text-base-content/20' : 'text-success'}">
                 {completed}
               </span>
             </div>
 
             <!-- 체크 인디케이터 -->
-            <div class="w-12 shrink-0 flex items-center justify-center">
-              <div class="w-8 h-8 rounded-full border-2 transition-all duration-150 flex items-center justify-center
+            <div class="w-14 shrink-0 flex items-center justify-center">
+              <div class="w-10 h-10 rounded-full border-2 transition-all duration-150 flex items-center justify-center
                 {isSel
                   ? 'bg-primary border-primary'
                   : 'border-base-300 bg-base-100'}">
                 {#if isSel}
-                  <Icon icon="heroicons:check" class="w-5 h-5 text-primary-content" />
+                  <Icon icon="heroicons:check" class="w-6 h-6 text-primary-content" />
                 {/if}
               </div>
             </div>
@@ -554,34 +554,33 @@
   ></div>
 
   <!-- 드로어 패널 -->
-  <div class="fixed top-0 right-0 h-full w-96 bg-base-100 shadow-2xl z-50 flex flex-col animate-slide-in">
+  <div class="fixed top-0 right-0 h-full w-1/2 bg-base-100 shadow-2xl z-50 flex flex-col animate-slide-in">
     <!-- 드로어 헤더 -->
-    <div class="px-4 py-3 bg-primary shrink-0 flex items-start justify-between">
+    <div class="px-8 py-6 bg-primary shrink-0 flex items-start justify-between">
       <div class="flex-1 min-w-0 mr-3">
-        <h3 class="text-sm font-bold text-primary-content truncate">
+        <h3 class="text-2xl font-bold text-primary-content truncate">
           {logTargetItem?.name ?? ''} 기록
         </h3>
-        <p class="text-xs text-primary-content/60 mt-0.5">오늘 처리 내역</p>
+        <p class="text-sm text-primary-content/60 mt-0.5">오늘 처리 내역</p>
       </div>
       <button
         type="button"
-        class="btn btn-ghost btn-xs btn-circle text-primary-content/70 hover:text-primary-content"
+        class="btn btn-ghost btn-md btn-circle text-primary-content/70 hover:text-primary-content"
         onclick={closeLogDrawer}
       >
-        <Icon icon="heroicons:x-mark" class="w-4 h-4" />
+        <Icon icon="heroicons:x-mark" class="w-6 h-6" />
       </button>
     </div>
 
     <!-- 안내 문구 -->
-    <div class="px-4 py-2.5 bg-warning/10 border-b border-warning/20 shrink-0">
-      <p class="text-xs text-warning font-bold">오늘 날짜 기록만 표시됩니다. 수정 불가.</p>
+    <div class="px-8 py-4 bg-warning/10 border-b border-warning/20 shrink-0">
+      <p class="text-base font-bold text-warning">오늘 날짜 기록만 표시됩니다. 수정 불가.</p>
     </div>
 
     <!-- 컬럼 헤더 -->
-    <div class="h-10 bg-base-200 border-b border-base-300 shrink-0 flex items-center px-4">
-      <div class="flex-1 grid grid-cols-5 gap-1 text-xs font-semibold text-base-content/40 uppercase tracking-wider">
+    <div class="h-14 bg-base-200 border-b border-base-300 shrink-0 flex items-center px-8">
+      <div class="flex-1 grid grid-cols-4 gap-1 text-sm font-bold text-base-content/40 uppercase tracking-wider">
         <div class="col-span-2">시각</div>
-        <div class="text-center">방식</div>
         <div class="text-center">이전</div>
         <div class="text-center">결과</div>
       </div>
@@ -596,46 +595,28 @@
         </div>
       {:else}
         {#each logEntries() as entry (entry.id)}
-          <div class="px-4 py-3 border-b border-base-200 hover:bg-base-200/60 transition-colors">
-            <div class="grid grid-cols-5 gap-1 items-center">
+          <div class="px-8 py-5 border-b border-base-200 hover:bg-base-200/60 transition-colors">
+            <div class="grid grid-cols-4 gap-1 items-center">
               <!-- 시각 -->
               <div class="col-span-2">
-                <span class="text-xs font-bold text-base-content">{formatTime(entry.createdAt)}</span>
-              </div>
-              <!-- 방식 -->
-              <div class="text-center">
-                <span class="badge badge-sm font-bold
-                  {entry.actionType === 'add' ? 'badge-success' : 'badge-primary'}">
-                  {entry.actionType === 'add' ? '+추가' : '지정'}
-                </span>
+                <span class="text-lg font-bold text-base-content">{formatTime(entry.createdAt)}</span>
               </div>
               <!-- 이전 -->
               <div class="text-center">
-                <span class="text-sm font-bold text-base-content/50">{entry.before}</span>
+                <span class="text-2xl font-bold text-base-content/50">{entry.before}</span>
               </div>
               <!-- 결과 -->
               <div class="text-center">
-                <span class="text-sm font-bold
+                <span class="text-2xl font-bold
                   {entry.after > entry.before ? 'text-success' : entry.after < entry.before ? 'text-error' : 'text-base-content/50'}">
                   {entry.after}
                 </span>
               </div>
             </div>
             <!-- 서브 텍스트 -->
-            {#if entry.actionType === 'add'}
-              <p class="text-xs text-base-content/40 mt-0.5">
-                {entry.before} + {entry.delta} = {entry.after}
-              </p>
-            {:else}
-              <p class="text-xs text-base-content/40 mt-0.5">
-                {entry.before} → {entry.after}
-                {#if entry.delta !== 0}
-                  <span class="{entry.delta > 0 ? 'text-success' : 'text-error'}">
-                    ({entry.delta > 0 ? '+' : ''}{entry.delta})
-                  </span>
-                {/if}
-              </p>
-            {/if}
+            <p class="text-sm text-base-content/40 mt-0.5">
+              {entry.before} + {entry.delta} = {entry.after}
+            </p>
           </div>
         {/each}
       {/if}
@@ -645,7 +626,7 @@
     <div class="px-4 py-3 border-t border-base-200 shrink-0">
       <button
         type="button"
-        class="btn btn-sm w-full btn-ghost border border-base-300 text-base-content/60"
+        class="btn btn-lg h-auto w-full btn-ghost border border-base-300 text-base font-bold text-base-content/60"
         onclick={closeLogDrawer}
       >닫기</button>
     </div>

@@ -156,22 +156,22 @@
         <div class="flex-1 min-w-0">
           <span class="text-sm font-semibold text-base-content/40 uppercase tracking-wider">품목명</span>
         </div>
-        <div class="w-32 text-center shrink-0">
+        <div class="w-36 text-center shrink-0">
           <span class="text-sm font-semibold text-base-content/40 uppercase tracking-wider">세탁완료</span>
         </div>
-        <div class="w-40 text-center shrink-0">
+        <div class="w-52 text-center shrink-0">
           <span class="text-sm font-semibold text-base-content/40 uppercase tracking-wider">출고수량</span>
         </div>
-        <div class="w-10 shrink-0 flex items-center justify-center">
+        <div class="w-14 shrink-0 flex items-center justify-center">
           <button
             type="button"
-            class="w-8 h-8 rounded-full border-2 transition-all duration-150 flex items-center justify-center
+            class="w-10 h-10 rounded-full border-2 transition-all duration-150 flex items-center justify-center
               {isAllSelected ? 'bg-primary border-primary' : 'border-base-content/30 hover:border-primary'}"
             onclick={toggleSelectAll}
             title={isAllSelected ? '전체 해제' : '전체 선택'}
           >
             {#if isAllSelected}
-              <Icon icon="heroicons:check" class="w-5 h-5 text-primary-content" />
+              <Icon icon="heroicons:check" class="w-6 h-6 text-primary-content" />
             {/if}
           </button>
         </div>
@@ -193,7 +193,7 @@
           <div
             role="button"
             tabindex="0"
-            class="flex items-center min-h-20 px-4 border-b border-base-200 transition-colors cursor-pointer
+            class="flex items-center min-h-28 px-6 py-4 border-b border-base-200 transition-colors cursor-pointer
               {isSel
                 ? 'bg-primary/5 border-l-2 border-l-primary'
                 : 'hover:bg-base-200/60 border-l-2 border-l-transparent'}"
@@ -202,30 +202,30 @@
           >
             <!-- 품목명 -->
             <div class="flex-1 min-w-0">
-              <p class="text-lg font-bold {isSel ? 'text-primary' : 'text-base-content'}">{item.name}</p>
+              <p class="text-2xl font-bold {isSel ? 'text-primary' : 'text-base-content'}">{item.name}</p>
             </div>
 
             <!-- 세탁완료 수량 -->
-            <div class="w-32 text-center shrink-0">
-              <span class="text-3xl font-black {item.counts.completed === 0 ? 'text-base-content/20' : 'text-success'}">{item.counts.completed}</span>
+            <div class="w-36 text-center shrink-0">
+              <span class="text-4xl font-black {item.counts.completed === 0 ? 'text-base-content/20' : 'text-success'}">{item.counts.completed}</span>
             </div>
 
             <!-- 출고수량 컨트롤 -->
-            <div class="w-40 flex items-center justify-center gap-1.5 shrink-0">
+            <div class="w-52 flex items-center justify-center gap-1.5 shrink-0">
               {#if isSel}
                 <button
                   aria-label="수량 감소"
-                  class="btn btn-sm btn-square"
+                  class="btn btn-md btn-square text-2xl"
                   onclick={(e) => { e.stopPropagation(); adjustQty(item.id, -1); }}
                 >−</button>
                 <button
                   aria-label="수량 직접 입력"
-                  class="min-w-16 px-2 h-10 rounded-lg border-2 border-primary text-primary font-black text-2xl text-center transition-colors hover:bg-primary/5"
+                  class="min-w-20 px-3 h-14 rounded-lg border-2 border-primary text-primary font-black text-3xl text-center transition-colors hover:bg-primary/5"
                   onclick={(e) => { e.stopPropagation(); openNumpad(item.id); }}
                 >{qty}</button>
                 <button
                   aria-label="수량 증가"
-                  class="btn btn-sm btn-square btn-primary"
+                  class="btn btn-md btn-square btn-primary text-2xl"
                   onclick={(e) => { e.stopPropagation(); adjustQty(item.id, 1); }}
                 >+</button>
               {:else}
@@ -234,11 +234,11 @@
             </div>
 
             <!-- 체크 서클 -->
-            <div class="w-10 shrink-0 flex justify-center">
-              <div class="w-8 h-8 rounded-full border-2 transition-all duration-150 flex items-center justify-center
+            <div class="w-14 shrink-0 flex justify-center">
+              <div class="w-10 h-10 rounded-full border-2 transition-all duration-150 flex items-center justify-center
                 {isSel ? 'bg-primary border-primary' : 'border-base-content/30'}">
                 {#if isSel}
-                  <Icon icon="heroicons:check" class="w-5 h-5 text-primary-content" />
+                  <Icon icon="heroicons:check" class="w-6 h-6 text-primary-content" />
                 {/if}
               </div>
             </div>
