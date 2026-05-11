@@ -271,9 +271,9 @@
 
     <div class="flex-1 overflow-y-auto flex flex-col min-h-0">
       {#if selectedItem}
+        <div class="flex flex-col justify-center flex-1 gap-4 px-6 py-6">
 
-        <!-- 현재 수량 + 입력 미리보기 2컬럼 -->
-        <div class="px-6 py-5 border-b border-base-200 shrink-0">
+          <!-- 현재 수량 + 입력 미리보기 2쫬럼 -->
           <div class="grid grid-cols-2 gap-3 h-28">
             <!-- 왼쪽: 현재 수량 -->
             <div class="rounded-2xl bg-base-200 flex flex-col items-center justify-center gap-1">
@@ -294,10 +294,8 @@
               {/if}
             </div>
           </div>
-        </div>
 
-        <!-- 숫자패드 -->
-        <div class="px-6 pt-5 pb-2 shrink-0">
+          <!-- 숫자패드 -->
           <div class="grid grid-cols-3 gap-2 select-none">
             {#each (['1','2','3','4','5','6','7','8','9','back','0','clear'] as const) as key, i (i)}
               {#if key === 'clear'}
@@ -323,10 +321,8 @@
               {/if}
             {/each}
           </div>
-        </div>
 
-        <!-- 적용 버튼 -->
-        <div class="px-6 pb-6 pt-2 shrink-0">
+          <!-- 적용 버튼 -->
           <button
             type="button"
             class="btn btn-success w-full h-20 text-2xl font-black
@@ -340,6 +336,7 @@
               <span class="text-base font-normal opacity-80 ml-1">→ {previewResult()}개</span>
             {/if}
           </button>
+
         </div>
 
       {:else}
