@@ -280,20 +280,20 @@
   </div>
 
   <!-- ── 오른쪽 패널 (데스크탑) ─────────────────────────────────── -->
-  <aside class="hidden md:flex w-80 bg-base-100 border-l border-base-300 flex-col shrink-0 min-h-0">
+  <aside class="hidden md:flex w-2/5 bg-base-100 border-l border-base-300 flex-col shrink-0 min-h-0">
 
     <div class="flex-1 overflow-y-auto flex flex-col min-h-0">
       {#if selectedItem}
 
         <!-- 현재 수량 표시 -->
-        <div class="px-4 pt-3 pb-2 border-b border-base-200 shrink-0">
-          <p class="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2">현재 수량</p>
+        <div class="px-6 py-5 border-b border-base-200 shrink-0">
+          <p class="text-sm font-bold text-base-content/40 uppercase tracking-wider mb-2">현재 수량</p>
           <div class="rounded-xl bg-primary/5 border border-primary/20 px-3 py-2 flex items-center justify-between">
             <div class="flex-1 min-w-0">
-              <span class="text-sm font-bold text-base-content truncate block">{selectedItem.name}</span>
+              <span class="text-xl font-black text-base-content truncate block">{selectedItem.name}</span>
               <div class="flex items-center gap-2 mt-0.5">
                 <span class="text-xs text-base-content/40">완료</span>
-                <span class="text-lg font-bold text-success">{currentCompleted}</span>
+                <span class="text-4xl font-black text-success">{currentCompleted}</span>
               </div>
             </div>
             <button
@@ -308,12 +308,12 @@
         </div>
 
         <!-- 편집 모드 선택 -->
-        <div class="px-4 py-3 border-b border-base-200 shrink-0">
-          <p class="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2">입력 방식</p>
+        <div class="px-6 py-5 border-b border-base-200 shrink-0">
+          <p class="text-sm font-bold text-base-content/40 uppercase tracking-wider mb-2">입력 방식</p>
           <div class="grid grid-cols-2 gap-2">
             <button
               type="button"
-              class="btn btn-sm h-10 rounded-lg font-bold
+              class="btn h-16 rounded-lg text-lg font-black
                 {editMode === 'add'
                   ? 'btn-success text-white'
                   : 'btn-ghost bg-base-200 text-base-content/60'}"
@@ -324,7 +324,7 @@
             </button>
             <button
               type="button"
-              class="btn btn-sm h-10 rounded-lg font-bold
+              class="btn h-16 rounded-lg text-lg font-black
                 {editMode === 'set'
                   ? 'btn-primary text-white'
                   : 'btn-ghost bg-base-200 text-base-content/60'}"
@@ -337,56 +337,56 @@
         </div>
 
         <!-- 미리보기 박스 -->
-        <div class="px-4 pt-3 pb-1 shrink-0">
-          <div class="h-14 rounded-xl bg-base-200 border-2
+        <div class="px-6 py-5 pb-1 shrink-0">
+          <div class="h-20 rounded-xl bg-base-200 border-2
             {editMode === 'add' ? 'border-success/50' : 'border-primary/50'}
             flex items-center px-4">
             {#if inputNum !== null && !isNaN(inputNum)}
               {#if editMode === 'add'}
-                <span class="text-xs font-bold text-success mr-2 shrink-0">+</span>
-                <span class="text-lg font-bold text-base-content">{currentCompleted}</span>
-                <span class="text-sm text-base-content/40 mx-2">+</span>
-                <span class="text-lg font-bold text-success">{inputNum}</span>
-                <span class="text-sm text-base-content/40 mx-2">=</span>
-                <span class="text-2xl font-black text-success ml-auto">{previewResult()}</span>
+                <span class="text-sm font-bold text-success mr-2 shrink-0">+</span>
+                <span class="text-2xl font-bold text-base-content">{currentCompleted}</span>
+                <span class="text-lg text-base-content/40 mx-2">+</span>
+                <span class="text-2xl font-bold text-success">{inputNum}</span>
+                <span class="text-lg text-base-content/40 mx-2">=</span>
+                <span class="text-5xl font-black text-success ml-auto">{previewResult()}</span>
               {:else}
-                <span class="text-xs font-bold text-primary mr-2 shrink-0">→</span>
-                <span class="text-lg font-bold text-base-content">{currentCompleted}</span>
-                <span class="text-sm text-base-content/40 mx-2">→</span>
-                <span class="text-2xl font-black text-primary ml-auto">{inputNum}</span>
+                <span class="text-sm font-bold text-primary mr-2 shrink-0">→</span>
+                <span class="text-2xl font-bold text-base-content">{currentCompleted}</span>
+                <span class="text-lg text-base-content/40 mx-2">→</span>
+                <span class="text-5xl font-black text-primary ml-auto">{inputNum}</span>
               {/if}
             {:else}
-              <span class="text-xs font-bold text-base-content/30 mr-2">입력</span>
-              <span class="text-4xl font-black text-base-content/20 flex-1 text-right tracking-widest">
+              <span class="text-sm font-bold text-base-content/30 mr-2">입력</span>
+              <span class="text-5xl font-black text-base-content/20 flex-1 text-right tracking-widest">
                 {inputValue || '—'}
               </span>
-              <span class="text-sm text-base-content/20 ml-2">개</span>
+              <span class="text-lg text-base-content/20 ml-2">개</span>
             {/if}
           </div>
         </div>
 
         <!-- 숫자패드 -->
-        <div class="px-4 py-3 shrink-0">
-          <div class="grid grid-cols-3 gap-1.5 select-none">
-            {#each (['7','8','9','4','5','6','1','2','3','0','back','clear'] as const) as key, i (i)}
+        <div class="px-6 py-5 shrink-0">
+          <div class="grid grid-cols-3 gap-2 select-none">
+            {#each (['1','2','3','4','5','6','7','8','9','back','0','clear'] as const) as key, i (i)}
               {#if key === 'clear'}
                 <button
                   type="button"
-                  class="h-12 rounded-lg font-bold text-lg btn btn-error btn-outline active:scale-95"
+                  class="h-20 rounded-lg font-black text-3xl btn btn-error btn-outline active:scale-95"
                   onclick={() => { inputValue = ''; }}
                 >C</button>
               {:else if key === 'back'}
                 <button
                   type="button"
-                  class="h-12 rounded-lg font-bold text-lg btn btn-ghost bg-base-200 border border-base-300 flex items-center justify-center active:scale-95"
+                  class="h-20 rounded-lg font-black text-3xl btn btn-ghost bg-base-200 border border-base-300 flex items-center justify-center active:scale-95"
                   onclick={() => { inputValue = inputValue.slice(0, -1); }}
                 >
-                  <Icon icon="heroicons:backspace" class="w-5 h-5" />
+                  <Icon icon="heroicons:backspace" class="w-7 h-7" />
                 </button>
               {:else}
                 <button
                   type="button"
-                  class="h-12 rounded-lg font-bold text-lg btn btn-ghost bg-base-100 border border-base-300 shadow-sm text-base-content active:scale-95"
+                  class="h-20 rounded-lg font-black text-3xl btn btn-ghost bg-base-100 border border-base-300 shadow-sm text-base-content active:scale-95"
                   onclick={() => { if (inputValue.length < 6) inputValue = inputValue + key; }}
                 >{key}</button>
               {/if}
@@ -395,10 +395,10 @@
         </div>
 
         <!-- 적용 버튼 -->
-        <div class="px-4 pb-3 shrink-0">
+        <div class="px-6 pb-5 shrink-0">
           <button
             type="button"
-            class="btn w-full h-12 font-bold
+            class="btn w-full h-20 text-xl font-black
               {editMode === 'add' ? 'btn-success' : 'btn-primary'}
               {(inputNum === null || isNaN(inputNum ?? NaN)) ? 'opacity-40' : ''}"
             disabled={inputNum === null || isNaN(inputNum ?? NaN)}
@@ -520,16 +520,16 @@
 
       <!-- 숫자패드 -->
       <div class="px-4 py-3 shrink-0">
-        <div class="grid grid-cols-3 gap-1.5 select-none">
-          {#each (['7','8','9','4','5','6','1','2','3','0','back','clear'] as const) as key, i (i)}
+        <div class="grid grid-cols-3 gap-2 select-none">
+          {#each (['1','2','3','4','5','6','7','8','9','back','0','clear'] as const) as key, i (i)}
             {#if key === 'clear'}
-              <button type="button" class="h-12 rounded-lg font-bold text-lg btn btn-error btn-outline active:scale-95" onclick={() => { inputValue = ''; }}>C</button>
+              <button type="button" class="h-16 rounded-lg font-black text-2xl btn btn-error btn-outline active:scale-95" onclick={() => { inputValue = ''; }}>C</button>
             {:else if key === 'back'}
-              <button type="button" class="h-12 rounded-lg font-bold text-lg btn btn-ghost bg-base-200 border border-base-300 flex items-center justify-center active:scale-95" onclick={() => { inputValue = inputValue.slice(0, -1); }}>
-                <Icon icon="heroicons:backspace" class="w-5 h-5" />
+              <button type="button" class="h-16 rounded-lg font-black text-2xl btn btn-ghost bg-base-200 border border-base-300 flex items-center justify-center active:scale-95" onclick={() => { inputValue = inputValue.slice(0, -1); }}>
+                <Icon icon="heroicons:backspace" class="w-6 h-6" />
               </button>
             {:else}
-              <button type="button" class="h-12 rounded-lg font-bold text-lg btn btn-ghost bg-base-100 border border-base-300 shadow-sm text-base-content active:scale-95" onclick={() => { if (inputValue.length < 6) inputValue = inputValue + key; }}>{key}</button>
+              <button type="button" class="h-16 rounded-lg font-black text-2xl btn btn-ghost bg-base-100 border border-base-300 shadow-sm text-base-content active:scale-95" onclick={() => { if (inputValue.length < 6) inputValue = inputValue + key; }}>{key}</button>
             {/if}
           {/each}
         </div>
