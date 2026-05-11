@@ -200,30 +200,30 @@
 <div class="flex-1 flex flex-col min-h-0 relative">
 
   <!-- ── 필터 헤더 ── -->
-  <div class="bg-base-100 border-b border-base-300 px-4 pt-3 pb-3 shrink-0 space-y-3">
+  <div class="bg-base-100 border-b border-base-300 px-6 pt-5 pb-5 shrink-0 space-y-4">
 
-    <!-- 퀵필터 + 날짜 범위 한 줄 -->
-    <div class="flex items-center gap-2 flex-wrap">
+    <!-- 퀴필터 + 날짜 범위 한 줄 -->
+    <div class="flex items-center gap-3 flex-wrap">
       <div class="join">
         {#each quickFilters as { key, label } (key)}
           <button
-            class="btn btn-xs join-item font-semibold
+            class="btn btn-sm join-item text-base font-black h-12 px-6
               {quickFilter === key ? 'btn-primary' : 'btn-ghost border border-base-300'}"
             onclick={() => applyQuick(key)}
           >{label}</button>
         {/each}
       </div>
 
-      <div class="flex items-center gap-1.5">
+      <div class="flex items-center gap-2">
         <button
           type="button"
-          class="h-7 px-3 rounded-lg border border-base-300 bg-base-100 text-sm font-bold text-base-content hover:bg-base-200 transition-colors"
+          class="h-12 px-5 rounded-xl border border-base-300 bg-base-100 text-lg font-bold text-base-content hover:bg-base-200 transition-colors"
           onclick={() => openPicker('from')}
         >{formatDateLabel(fromDate)}</button>
-        <span class="text-base-content/30 text-xs">—</span>
+        <span class="text-base-content/30 text-xl font-bold">—</span>
         <button
           type="button"
-          class="h-7 px-3 rounded-lg border border-base-300 bg-base-100 text-sm font-bold text-base-content hover:bg-base-200 transition-colors"
+          class="h-12 px-5 rounded-xl border border-base-300 bg-base-100 text-lg font-bold text-base-content hover:bg-base-200 transition-colors"
           onclick={() => openPicker('to')}
         >{formatDateLabel(toDate)}</button>
       </div>
@@ -231,18 +231,18 @@
     </div>
 
     <!-- 요약 카드 3개 -->
-    <div class="grid grid-cols-3 gap-2">
-      <div class="bg-base-200 rounded-lg px-3 py-2 text-center">
-        <p class="text-[10px] text-base-content/40 mb-0.5">출고</p>
-        <p class="text-lg font-black text-base-content">{shipments.length}<span class="text-[10px] font-medium text-base-content/40 ml-0.5">건</span></p>
+    <div class="grid grid-cols-3 gap-3">
+      <div class="bg-base-200 rounded-2xl px-4 py-4 text-center">
+        <p class="text-sm font-bold text-base-content/40 mb-1">출고</p>
+        <p class="text-4xl font-black text-base-content">{shipments.length}<span class="text-base font-bold text-base-content/40 ml-1">건</span></p>
       </div>
-      <div class="bg-base-200 rounded-lg px-3 py-2 text-center">
-        <p class="text-[10px] text-base-content/40 mb-0.5">수량</p>
-        <p class="text-lg font-black text-base-content">{totalItemCount}<span class="text-[10px] font-medium text-base-content/40 ml-0.5">개</span></p>
+      <div class="bg-base-200 rounded-2xl px-4 py-4 text-center">
+        <p class="text-sm font-bold text-base-content/40 mb-1">수량</p>
+        <p class="text-4xl font-black text-base-content">{totalItemCount}<span class="text-base font-bold text-base-content/40 ml-1">개</span></p>
       </div>
-      <div class="bg-base-200 rounded-lg px-3 py-2 text-center">
-        <p class="text-[10px] text-base-content/40 mb-0.5">거래처</p>
-        <p class="text-lg font-black text-base-content">{uniqueClientCount}<span class="text-[10px] font-medium text-base-content/40 ml-0.5">곳</span></p>
+      <div class="bg-base-200 rounded-2xl px-4 py-4 text-center">
+        <p class="text-sm font-bold text-base-content/40 mb-1">거래처</p>
+        <p class="text-4xl font-black text-base-content">{uniqueClientCount}<span class="text-base font-bold text-base-content/40 ml-1">곳</span></p>
       </div>
     </div>
 
@@ -250,18 +250,18 @@
 
   <!-- ── 테이블 헤더 ── -->
   {#if shipments.length > 0}
-    <div class="h-10 bg-base-200 border-b border-base-300 px-4 shrink-0 flex items-center">
-      <div class="w-36 shrink-0">
-        <span class="text-xs font-semibold text-base-content/40 uppercase tracking-wider">일시</span>
+    <div class="h-16 bg-base-200 border-b border-base-300 px-6 shrink-0 flex items-center">
+      <div class="w-48 shrink-0">
+        <span class="text-sm font-black text-base-content/40 uppercase tracking-wider">일시</span>
       </div>
-      <div class="w-32 shrink-0">
-        <span class="text-xs font-semibold text-base-content/40 uppercase tracking-wider">거래처</span>
+      <div class="w-40 shrink-0">
+        <span class="text-sm font-black text-base-content/40 uppercase tracking-wider">거래처</span>
       </div>
       <div class="flex-1 min-w-0">
-        <span class="text-xs font-semibold text-base-content/40 uppercase tracking-wider">품목</span>
+        <span class="text-sm font-black text-base-content/40 uppercase tracking-wider">품목</span>
       </div>
-      <div class="w-12 shrink-0"></div>
-      <div class="w-12 shrink-0"></div>
+      <div class="w-16 shrink-0"></div>
+      <div class="w-16 shrink-0"></div>
     </div>
   {/if}
 
@@ -283,54 +283,54 @@
         <div
           role="button"
           tabindex="0"
-          class="flex items-center min-h-14 px-4 border-b border-base-200 transition-colors cursor-pointer
+          class="flex items-center min-h-24 px-6 border-b border-base-200 transition-colors cursor-pointer
             {isEditing
-              ? 'bg-primary/5 border-l-2 border-l-primary'
-              : 'hover:bg-base-200/60 border-l-2 border-l-transparent'}"
+              ? 'bg-primary/5 border-l-4 border-l-primary'
+              : 'hover:bg-base-200/60 border-l-4 border-l-transparent'}"
           onclick={() => openEditPanel(shipment)}
           onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') openEditPanel(shipment); }}
         >
           <!-- 날짜/시간 -->
-          <div class="w-36 shrink-0">
-            <p class="text-sm font-bold text-base-content tabular-nums">
-              {formatDate(shipment.shippedAt)} {formatTime(shipment.shippedAt)}
+          <div class="w-48 shrink-0">
+            <p class="text-lg font-bold text-base-content tabular-nums">
+              {formatDate(shipment.shippedAt)}<br/><span class="text-base font-bold text-base-content/50">{formatTime(shipment.shippedAt)}</span>
             </p>
           </div>
 
           <!-- 거래처 -->
-          <div class="w-32 shrink-0 pr-2">
+          <div class="w-40 shrink-0 pr-2">
             {#if client}
-              <p class="text-sm font-semibold text-base-content truncate">{client.name}</p>
+              <p class="text-xl font-black text-base-content truncate">{client.name}</p>
             {:else}
-              <p class="text-sm text-base-content/30">미확인</p>
+              <p class="text-lg text-base-content/30">미확인</p>
             {/if}
           </div>
 
           <!-- 품목 요약 -->
           <div class="flex-1 min-w-0">
-            <p class="text-sm text-base-content/60">{shipment.items.length}종 · <span class="font-bold text-base-content">{shipTotal}개</span></p>
+            <p class="text-lg text-base-content/60">{shipment.items.length}종 · <span class="font-black text-xl text-base-content">{shipTotal}개</span></p>
           </div>
 
           <!-- 편집 버튼 -->
-          <div class="w-12 flex justify-center shrink-0">
+          <div class="w-16 flex justify-center shrink-0">
             <button
               aria-label="출고 수정"
-              class="btn btn-sm btn-square
+              class="btn btn-md btn-square
                 {isEditing ? 'btn-primary' : 'btn-ghost text-base-content/40 hover:text-base-content'}"
               onclick={(e) => { e.stopPropagation(); if (isEditing) { closeEditPanel(); } else { openEditPanel(shipment); } }}
             >
-              <Icon icon="heroicons:pencil-square" class="w-4 h-4" />
+              <Icon icon="heroicons:pencil-square" class="w-6 h-6" />
             </button>
           </div>
 
           <!-- 전표 버튼 -->
-          <div class="w-12 flex justify-center shrink-0">
+          <div class="w-16 flex justify-center shrink-0">
             <button
               aria-label="전표 출력"
-              class="btn btn-sm btn-square btn-ghost text-base-content/40 hover:text-base-content"
+              class="btn btn-md btn-square btn-ghost text-base-content/40 hover:text-base-content"
               onclick={(e) => openSlip(shipment, e)}
             >
-              <Icon icon="heroicons:printer" class="w-4 h-4" />
+              <Icon icon="heroicons:printer" class="w-6 h-6" />
             </button>
           </div>
         </div>
@@ -349,84 +349,83 @@
 
     <!-- 슬라이드 패널 -->
     <div
-      class="absolute right-0 top-0 bottom-0 w-110 bg-base-100 shadow-2xl z-20 flex flex-col
+      class="absolute right-0 top-0 bottom-0 w-[480px] bg-base-100 shadow-2xl z-20 flex flex-col
         transition-transform duration-300
         {editPanelVisible ? 'translate-x-0' : 'translate-x-full'}"
     >
       <!-- 패널 헤더 -->
-      <div class="px-4 h-14 border-b border-base-200 flex items-center justify-between shrink-0">
+      <div class="px-6 h-20 border-b border-base-200 flex items-center justify-between shrink-0">
         <div>
-          <h3 class="text-sm font-bold text-base-content">출고 수정</h3>
+          <h3 class="text-xl font-black text-base-content">출고 수정</h3>
           {#each store.shipments.filter((sh: Shipment) => sh.id === editingShipmentId) as s (s.id)}
-            <p class="text-xs text-base-content/40 mt-0.5">{formatDate(s.shippedAt)} {formatTime(s.shippedAt)}</p>
+            <p class="text-sm font-bold text-base-content/40 mt-0.5">{formatDate(s.shippedAt)} {formatTime(s.shippedAt)}</p>
           {/each}
         </div>
         <button
           aria-label="닫기"
-          class="btn btn-sm btn-square btn-ghost text-base-content/50"
+          class="btn btn-md btn-square btn-ghost text-base-content/50"
           onclick={closeEditPanel}
         >
-          <Icon icon="heroicons:x-mark" class="w-4 h-4" />
+          <Icon icon="heroicons:x-mark" class="w-6 h-6" />
         </button>
       </div>
 
       <div class="flex-1 overflow-y-auto min-h-0">
 
         <!-- 품목 수량 수정 -->
-        <div class="px-4 py-3 border-b border-base-200">
-          <p class="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2">품목 수량</p>
-          <div class="space-y-1.5">
+        <div class="px-6 py-5 border-b border-base-200">
+          <p class="text-sm font-black text-base-content/40 uppercase tracking-wider mb-3">품목 수량</p>
+          <div class="space-y-2">
             {#each editItems as item, idx (item.laundryItemId)}
-              <div class="flex items-center gap-3 min-h-14 rounded-lg border border-base-200 px-3">
+              <div class="flex items-center gap-3 min-h-20 rounded-xl border border-base-200 px-4">
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-semibold text-base-content truncate">{item.itemName}</p>
+                  <p class="text-xl font-bold text-base-content truncate">{item.itemName}</p>
                 </div>
-                <div class="flex items-center gap-1.5 shrink-0">
+                <div class="flex items-center gap-2 shrink-0">
                   <button
                     aria-label="수량 감소"
-                    class="btn btn-sm btn-square btn-ghost border border-base-300 font-bold text-base"
+                    class="btn btn-md btn-square btn-ghost border border-base-300 font-black text-2xl"
                     onclick={() => adjustEditQty(idx, -1)}
                   >−</button>
-                  <span class="w-10 text-center text-lg font-black text-primary tabular-nums">{item.quantity}</span>
+                  <span class="w-14 text-center text-3xl font-black text-primary tabular-nums">{item.quantity}</span>
                   <button
                     aria-label="수량 증가"
-                    class="btn btn-sm btn-square btn-primary font-bold text-base"
+                    class="btn btn-md btn-square btn-primary font-black text-2xl"
                     onclick={() => adjustEditQty(idx, 1)}
                   >+</button>
                 </div>
               </div>
             {/each}
           </div>
-          <!-- 합계 -->
-          <div class="mt-2 flex items-center justify-between px-3 py-2 bg-base-200 rounded-lg">
-            <span class="text-xs font-semibold text-base-content/40 uppercase tracking-wider">합계</span>
-            <span class="text-lg font-black text-primary tabular-nums">
-              {editItems.reduce((s, i) => s + i.quantity, 0)}<span class="text-xs font-semibold text-primary/60 ml-1">개</span>
+          <div class="mt-3 flex items-center justify-between px-4 py-3 bg-base-200 rounded-xl">
+            <span class="text-sm font-black text-base-content/40 uppercase tracking-wider">합계</span>
+            <span class="text-3xl font-black text-primary tabular-nums">
+              {editItems.reduce((s, i) => s + i.quantity, 0)}<span class="text-base font-bold text-primary/60 ml-1">개</span>
             </span>
           </div>
         </div>
 
         <!-- 출고 일시 -->
-        <div class="px-4 py-3 border-b border-base-200">
-          <p class="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2">출고 일시</p>
+        <div class="px-6 py-5 border-b border-base-200">
+          <p class="text-sm font-black text-base-content/40 uppercase tracking-wider mb-3">출고 일시</p>
           <button
             type="button"
-            class="h-9 px-3 w-full rounded-lg border border-base-300 bg-base-100 text-sm font-bold text-base-content hover:bg-base-200 transition-colors text-left"
+            class="h-14 px-4 w-full rounded-xl border border-base-300 bg-base-100 text-lg font-bold text-base-content hover:bg-base-200 transition-colors text-left"
             onclick={() => showEditDatePicker = true}
           >{editShippedAt.replace('T', ' ')}</button>
         </div>
 
         <!-- 삭제 확인 인라인 -->
         {#if deleteConfirming}
-          <div class="px-4 py-3 bg-error/8 border-b border-error/15">
-            <p class="text-xs font-semibold text-error mb-2">이 출고 기록을 삭제하시겠습니까?</p>
+          <div class="px-6 py-4 bg-error/8 border-b border-error/15">
+            <p class="text-base font-black text-error mb-3">이 출고 기록을 삭제하시겠습니까?</p>
             <div class="flex gap-2">
               <button
-                class="btn btn-error btn-sm flex-1 font-bold"
+                class="btn btn-error btn-md flex-1 font-black text-lg"
                 onclick={deleteShipment}
               >삭제 확인</button>
               <button
-                class="btn btn-ghost btn-sm flex-1 font-bold border border-base-300"
+                class="btn btn-ghost btn-md flex-1 font-black text-lg border border-base-300"
                 onclick={() => (deleteConfirming = false)}
               >취소</button>
             </div>
@@ -436,16 +435,16 @@
       </div>
 
       <!-- 패널 하단 버튼 -->
-      <div class="px-4 py-4 border-t border-base-200 flex gap-2 shrink-0">
+      <div class="px-6 py-5 border-t border-base-200 flex gap-3 shrink-0">
         <button
-          class="btn btn-primary flex-1 h-12 font-bold"
+          class="btn btn-primary flex-1 h-16 font-black text-xl"
           onclick={saveEdit}
         >저장</button>
         <button
-          class="btn btn-outline btn-error h-12 px-4 font-bold"
+          class="btn btn-outline btn-error h-16 px-6 font-black text-xl"
           onclick={() => (deleteConfirming = !deleteConfirming)}
         >
-          <Icon icon="heroicons:trash" class="w-4 h-4" />
+          <Icon icon="heroicons:trash" class="w-6 h-6" />
         </button>
       </div>
     </div>
