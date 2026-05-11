@@ -16,6 +16,7 @@
   let quantities = new SvelteMap<string, number>();
   let editingItemId = $state<string | null>(null);
   let numpadValue = $state('');
+  let showNumpadModal = $state(false);
 
   function toLocalDatetimeValue(d: Date): string {
     const p = (n: number) => String(n).padStart(2, '0');
@@ -105,6 +106,13 @@
   function openNumpad(itemId: string) {
     editingItemId = itemId;
     numpadValue = String(quantities.get(itemId) ?? 0);
+    showNumpadModal = true;
+  }
+
+  function closeNumpadModal() {
+    showNumpadModal = false;
+    editingItemId = null;
+    numpadValue = '';
   }
 
   function handleNumpadConfirm(val: string) {
@@ -115,7 +123,7 @@
     const clamped = Math.min(n, item?.counts.completed ?? 0);
     if (clamped === 0) { selectedItemIds.delete(editingItemId); quantities.delete(editingItemId); }
     else quantities.set(editingItemId, clamped);
-    editingItemId = null; numpadValue = '';
+    editingItemId = null; numpadValue = ''; showNumpadModal = false;
   }
 
   let showMobilePanel = $state(false);
@@ -251,92 +259,35 @@
   <!-- ── 출고 확인 패널 (데스크탑) ── -->
   <aside class="hidden md:flex flex-col w-2/5 bg-base-100 border-l border-base-200 shrink-0 min-h-0">
 
-    {#if editingItemId !== null}
-      {@const editItem = store.laundryItems.find((i: LaundryItem) => i.id === editingItemId)}
-
-      <!-- 키패드 모드 -->
-      <div class="flex flex-col justify-center flex-1 gap-4 px-6 py-6">
-
-        <!-- 2컬럼: 출고가능 수량 + 입력값 -->
-        <div class="grid grid-cols-2 gap-3 h-28">
-          <div class="rounded-2xl bg-base-200 flex flex-col items-center justify-center gap-1 px-2">
-            <span class="text-xs font-bold text-base-content/40 uppercase tracking-wider text-center truncate w-full text-center">{editItem?.name}</span>
-            <span class="text-5xl font-black text-base-content">{editItem?.counts.completed ?? 0}</span>
-            <span class="text-sm font-bold text-base-content/30">출고가능</span>
+    <!-- 요약 or 빈 상태 -->
+    <div class="flex-1 flex flex-col min-h-0">
+      {#if selectedEntries.length === 0}
+        <div class="flex flex-col items-center justify-center flex-1 gap-4 px-6">
+          <div class="w-20 h-20 rounded-2xl bg-base-200 flex items-center justify-center">
+            <Icon icon="heroicons:clipboard-document-check" class="w-10 h-10 text-base-content/20" />
           </div>
-          <div class="rounded-2xl border-2 border-primary/60 bg-primary/5 flex flex-col items-center justify-center gap-1">
-            <span class="text-xs font-bold text-base-content/30 uppercase tracking-wider">입력</span>
-            <span class="text-5xl font-black tracking-widest {numpadValue ? 'text-primary' : 'text-base-content/20'}">{numpadValue || '—'}</span>
-            <span class="text-sm font-bold text-base-content/20">개</span>
-          </div>
+          <p class="text-xl font-black text-base-content/30">품목 미선택</p>
+          <p class="text-base text-base-content/20 text-center">왼쪽 목록에서<br/>출고할 품목을 켜세요</p>
         </div>
-
-        <!-- 키패드 -->
-        <div class="grid grid-cols-3 gap-2 select-none">
-          {#each (['1','2','3','4','5','6','7','8','9','back','0','clear'] as const) as key, i (i)}
-            {#if key === 'clear'}
-              <button type="button"
-                class="h-24 rounded-xl font-black text-2xl btn btn-error btn-outline active:scale-95"
-                onclick={() => { numpadValue = ''; }}
-              >C</button>
-            {:else if key === 'back'}
-              <button type="button"
-                class="h-24 rounded-xl font-black btn btn-ghost bg-base-200 border border-base-300 flex items-center justify-center active:scale-95"
-                onclick={() => { numpadValue = numpadValue.slice(0, -1); }}
-              >
-                <Icon icon="heroicons:backspace" class="w-10 h-10" />
-              </button>
-            {:else}
-              <button type="button"
-                class="h-24 rounded-xl font-black text-3xl btn btn-ghost bg-base-100 border border-base-300 shadow-sm text-base-content active:scale-95"
-                onclick={() => { if (numpadValue.length < 6) numpadValue = numpadValue + key; }}
-              >{key}</button>
-            {/if}
-          {/each}
-        </div>
-
-        <!-- 확인 버튼 -->
-        <button type="button"
-          class="btn btn-primary w-full h-20 text-2xl font-black {numpadValue === '' ? 'opacity-40' : ''}"
-          disabled={numpadValue === ''}
-          onclick={() => handleNumpadConfirm(numpadValue)}
-        >입력 확인</button>
-
-      </div>
-
-    {:else}
-
-      <!-- 일반 모드: 요약 or 빈 상태 -->
-      <div class="flex-1 flex flex-col min-h-0">
-        {#if selectedEntries.length === 0}
-          <div class="flex flex-col items-center justify-center flex-1 gap-4 px-6">
-            <div class="w-20 h-20 rounded-2xl bg-base-200 flex items-center justify-center">
-              <Icon icon="heroicons:clipboard-document-check" class="w-10 h-10 text-base-content/20" />
+      {:else}
+        <!-- 요약 카드 -->
+        <div class="px-6 py-6 border-b border-base-200 shrink-0">
+          <div class="grid grid-cols-2 gap-3 h-28">
+            <div class="rounded-2xl bg-base-200 flex flex-col items-center justify-center gap-1">
+              <span class="text-sm font-bold text-base-content/40">품목 수</span>
+              <span class="text-5xl font-black text-base-content">{selectedEntries.length}</span>
+              <span class="text-sm font-bold text-base-content/30">종</span>
             </div>
-            <p class="text-xl font-black text-base-content/30">품목 미선택</p>
-            <p class="text-base text-base-content/20 text-center">왼쪽 목록에서<br/>출고할 품목을 켜세요</p>
-          </div>
-        {:else}
-          <!-- 요약 카드 -->
-          <div class="px-6 py-6 border-b border-base-200 shrink-0">
-            <div class="grid grid-cols-2 gap-3 h-28">
-              <div class="rounded-2xl bg-base-200 flex flex-col items-center justify-center gap-1">
-                <span class="text-sm font-bold text-base-content/40">품목 수</span>
-                <span class="text-5xl font-black text-base-content">{selectedEntries.length}</span>
-                <span class="text-sm font-bold text-base-content/30">종</span>
-              </div>
-              <div class="rounded-2xl bg-primary/5 border-2 border-primary/30 flex flex-col items-center justify-center gap-1">
-                <span class="text-sm font-bold text-primary/60">총 수량</span>
-                <span class="text-5xl font-black text-primary">{totalSelectedQty}</span>
-                <span class="text-sm font-bold text-primary/40">개</span>
-              </div>
+            <div class="rounded-2xl bg-primary/5 border-2 border-primary/30 flex flex-col items-center justify-center gap-1">
+              <span class="text-sm font-bold text-primary/60">총 수량</span>
+              <span class="text-5xl font-black text-primary">{totalSelectedQty}</span>
+              <span class="text-sm font-bold text-primary/40">개</span>
             </div>
           </div>
-        {/if}
-        <div class="mt-auto shrink-0"></div>
-      </div>
-
-    {/if}
+        </div>
+      {/if}
+      <div class="mt-auto shrink-0"></div>
+    </div>
 
     <!-- 하단 액션 버튼 -->
     <div class="px-6 pt-4 pb-5 border-t border-base-200 space-y-3 shrink-0">
@@ -448,6 +399,76 @@
       <button class="btn btn-ghost w-full font-bold text-sm text-base-content/40 border border-base-200" onclick={() => showMobilePanel = false}>
         취소
       </button>
+    </div>
+  </div>
+{/if}
+
+{#if showNumpadModal && editingItemId !== null}
+  {@const modalItem = store.laundryItems.find((i: LaundryItem) => i.id === editingItemId)}
+  <div
+    class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+    role="button" tabindex="-1"
+    onclick={closeNumpadModal}
+    onkeydown={(e) => e.key === 'Escape' && closeNumpadModal()}
+    aria-label="닫기"
+  >
+    <div
+      class="bg-base-100 rounded-2xl shadow-2xl w-[480px] overflow-hidden"
+      role="dialog" aria-modal="true"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
+      tabindex="-1"
+    >
+      <div class="px-6 py-5 bg-primary flex items-center justify-between">
+        <div>
+          <p class="text-2xl font-black text-primary-content">{modalItem?.name}</p>
+          <p class="text-sm text-primary-content/60 mt-0.5">출고가능 {modalItem?.counts.completed ?? 0}개</p>
+        </div>
+        <button type="button" class="btn btn-ghost btn-md btn-circle text-primary-content/70" onclick={closeNumpadModal}>
+          <Icon icon="heroicons:x-mark" class="w-6 h-6" />
+        </button>
+      </div>
+      <div class="p-6 flex flex-col gap-4">
+        <div class="grid grid-cols-2 gap-3 h-28">
+          <div class="rounded-2xl bg-base-200 flex flex-col items-center justify-center gap-1">
+            <span class="text-xs font-bold text-base-content/40 uppercase tracking-wider">출고가능</span>
+            <span class="text-5xl font-black text-base-content">{modalItem?.counts.completed ?? 0}</span>
+            <span class="text-sm font-bold text-base-content/30">개</span>
+          </div>
+          <div class="rounded-2xl border-2 border-primary/60 bg-primary/5 flex flex-col items-center justify-center gap-1">
+            <span class="text-xs font-bold text-base-content/30 uppercase tracking-wider">입력</span>
+            <span class="text-5xl font-black tracking-widest {numpadValue ? 'text-primary' : 'text-base-content/20'}">{numpadValue || '—'}</span>
+            <span class="text-sm font-bold text-base-content/20">개</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 select-none">
+          {#each (['1','2','3','4','5','6','7','8','9','back','0','clear'] as const) as key, i (i)}
+            {#if key === 'clear'}
+              <button type="button"
+                class="h-20 rounded-xl font-black text-2xl btn btn-error btn-outline active:scale-95"
+                onclick={() => { numpadValue = ''; }}
+              >C</button>
+            {:else if key === 'back'}
+              <button type="button"
+                class="h-20 rounded-xl font-black btn btn-ghost bg-base-200 border border-base-300 flex items-center justify-center active:scale-95"
+                onclick={() => { numpadValue = numpadValue.slice(0, -1); }}
+              >
+                <Icon icon="heroicons:backspace" class="w-10 h-10" />
+              </button>
+            {:else}
+              <button type="button"
+                class="h-20 rounded-xl font-black text-3xl btn btn-ghost bg-base-100 border border-base-300 shadow-sm text-base-content active:scale-95"
+                onclick={() => { if (numpadValue.length < 6) numpadValue = numpadValue + key; }}
+              >{key}</button>
+            {/if}
+          {/each}
+        </div>
+        <button type="button"
+          class="btn btn-primary w-full h-16 text-2xl font-black {numpadValue === '' ? 'opacity-40' : ''}"
+          disabled={numpadValue === ''}
+          onclick={() => handleNumpadConfirm(numpadValue)}
+        >수량 확인</button>
+      </div>
     </div>
   </div>
 {/if}
