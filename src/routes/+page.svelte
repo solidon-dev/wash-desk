@@ -27,52 +27,50 @@
   }
 </script>
 
-<div class="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+<div class="min-h-screen bg-base-200 flex items-center justify-center p-4">
   <div class="w-full max-w-xs flex flex-col gap-8">
 
     <div class="flex flex-col gap-1">
-      <h1 class="text-2xl font-bold text-white tracking-tight">WashDesk</h1>
-      <p class="text-sm text-zinc-500">계정 정보를 입력하세요</p>
+      <h1 class="text-2xl font-bold text-base-content tracking-tight">WashDesk</h1>
+      <p class="text-sm text-base-content/40">계정 정보를 입력하세요</p>
     </div>
 
     <form class="flex flex-col gap-4" onsubmit={handleLogin}>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-medium text-zinc-400 uppercase tracking-wider" for="id">아이디</label>
+      <label class="form-control w-full gap-1">
+        <span class="label-text text-xs font-medium text-base-content/50 uppercase tracking-wider">아이디</span>
         <input
-          id="id"
           type="text"
-          class="w-full bg-zinc-900 border border-zinc-800 text-white rounded-lg px-4 py-3 text-sm outline-none focus:border-zinc-600 transition-colors placeholder:text-zinc-600"
+          class="input input-bordered w-full"
           placeholder="아이디 입력"
           bind:value={id}
           autocomplete="username"
           required
         />
-      </div>
+      </label>
 
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-medium text-zinc-400 uppercase tracking-wider" for="password">비밀번호</label>
+      <label class="form-control w-full gap-1">
+        <span class="label-text text-xs font-medium text-base-content/50 uppercase tracking-wider">비밀번호</span>
         <input
-          id="password"
           type="password"
-          class="w-full bg-zinc-900 border border-zinc-800 text-white rounded-lg px-4 py-3 text-sm outline-none focus:border-zinc-600 transition-colors placeholder:text-zinc-600"
+          class="input input-bordered w-full"
           placeholder="비밀번호 입력"
           bind:value={password}
           autocomplete="current-password"
           required
         />
-      </div>
+      </label>
 
       {#if errorMsg}
-        <p class="text-xs text-red-400 font-medium">{errorMsg}</p>
+        <p class="text-error text-xs font-medium">{errorMsg}</p>
       {/if}
 
       <button
         type="submit"
-        class="w-full bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-950 font-semibold rounded-lg px-4 py-3 text-sm transition-colors mt-1 disabled:opacity-40 flex items-center justify-center gap-2"
+        class="btn btn-neutral w-full mt-1"
         disabled={loading}
       >
         {#if loading}
-          <span class="w-4 h-4 border-2 border-zinc-400 border-t-zinc-950 rounded-full animate-spin"></span>
+          <span class="loading loading-spinner loading-sm"></span>
         {:else}
           로그인
         {/if}
