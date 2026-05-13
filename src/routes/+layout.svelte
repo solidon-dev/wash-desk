@@ -2,12 +2,27 @@
   import '../app.css';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
+  import { onMount } from 'svelte';
   import Icon from '@iconify/svelte';
   import { store, selectClient, NAV_ITEMS } from '$lib/store.svelte';
+  import { authStore, initAuth } from '$lib/auth.svelte';
 
   let { children } = $props();
   const currentPath = $derived($page.url.pathname);
   let showClientModal = $state(false);
+
+  onMount(async () => {
+    await initAuth();
+    if (!authStore.user && currentPath !== '/') {
+      goto('/');
+    }
+  });
+
+  $effect(() => {
+    if (!authStore.loading && !authStore.user && currentPath !== '/') {
+      goto('/');
+    }
+  });
 
   function pickClient(id: string) {
     selectClient(id);
@@ -20,6 +35,7 @@
 </script>
 
 <div class="flex flex-col h-screen bg-base-200 overflow-hidden select-none">
+  {#if currentPath !== '/'}
   <header class="h-20 bg-primary flex items-center shrink-0 z-10">
     <!-- 거래처 버튼 -->
     <button
@@ -48,6 +64,7 @@
       {/each}
     </nav>
   </header>
+  {/if}
   <div class="flex-1 min-h-0 min-w-0 flex flex-col">
     {@render children()}
   </div>
