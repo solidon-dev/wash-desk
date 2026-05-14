@@ -2,23 +2,11 @@
   import Icon from '@iconify/svelte';
   import DatePicker from '$lib/components/DatePicker.svelte';
   import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-  import { store } from '$lib/store.svelte';
-  import { getItemsByClient } from '$lib/api/items';
-  import { getCategories } from '$lib/api/categories';
-  import { getInventory } from '$lib/api/inventory';
+  import { onMount } from 'svelte';
+  import { store, loadData, bulkUpdateInventory, type ItemWithCategory } from '$lib/store.svelte';
   import { executeShipout as executeShipoutRPC } from '$lib/api/shipouts';
+  import { getInventory } from '$lib/api/inventory';
   import { getSession } from '$lib/api/auth';
-  import type { Item, Category } from '$lib/supabase/types';
-
-  type ItemWithCategory = Item & { categories: { id: string; name: string } | null };
-  type InventoryMap = Record<string, number>;
-  type InventoryIdMap = Record<string, string>;
-
-  // ── 데이터 상태 ──────────────────────────────────────────────────
-  let categories = $state<Category[]>([]);
-  let items = $state<ItemWithCategory[]>([]);
-  let inventoryMap = $state<InventoryMap>({});
-  let inventoryIdMap = $state<InventoryIdMap>({});
 
   // ── UI 상태 ──────────────────────────────────────────────────────
   let activeCategoryId = $state<string | 'all'>('all');
@@ -33,13 +21,41 @@
   let applying = $state(false);
   let showShippedAtPicker = $state(false);
 
-  // ── 충돌 모달 ───────────────────────────────────────────────
+  // ── 충돌 모달 (실제 재고 부족 레이스컨디션 대비) ───────────────
   let showConflictModal = $state(false);
   let conflictItemName = $state('');
   function closeConflictModal() { showConflictModal = false; }
 
+  // ── 외부 변경 확인 모달 ──────────────────────────────────────
+  type ExternalChangeEntry = {
+    itemId:   string;
+    itemName: string;
+    localQty: number;
+    liveQty:  number;
+    shipQty:  number;
+  };
+  let showExternalChangeModal = $state(false);
+  let externalChangeEntries = $state<ExternalChangeEntry[]>([]);
+  let _resolveExternalChange: ((confirmed: boolean) => void) | null = null;
+
+  function askExternalChange(entries: ExternalChangeEntry[]): Promise<boolean> {
+    externalChangeEntries = entries;
+    showExternalChangeModal = true;
+    return new Promise(resolve => { _resolveExternalChange = resolve; });
+  }
+  function confirmExternalChange() {
+    showExternalChangeModal = false;
+    _resolveExternalChange?.(true);
+    _resolveExternalChange = null;
+  }
+  function cancelExternalChange() {
+    showExternalChangeModal = false;
+    _resolveExternalChange?.(false);
+    _resolveExternalChange = null;
+  }
+
   // ── 60초 자동 갱신 ───────────────────────────────────────────────
-  $effect(() => {
+  onMount(() => {
     const interval = setInterval(() => {
       if (store.factoryId && store.selectedClientId) {
         loadData(store.factoryId, store.selectedClientId);
@@ -54,52 +70,35 @@
   }
   let shippedAtLocal = $state(toLocalDatetimeValue(new Date()));
 
-  // ── 데이터 로드 ──────────────────────────────────────────────────
-  async function loadData(factoryId: string, clientId: string) {
-    const [catRes, itemRes, invRes] = await Promise.all([
-      getCategories(clientId),
-      getItemsByClient(clientId),
-      getInventory(factoryId, clientId),
-    ]);
-    categories = catRes.data ?? [];
-    const iMap: InventoryMap = {};
-    const idMap: InventoryIdMap = {};
-    for (const row of invRes.data ?? []) {
-      iMap[row.item_id] = row.quantity;
-      idMap[row.item_id] = row.id;
-    }
-    inventoryMap = iMap;
-    inventoryIdMap = idMap;
-    const rawItems = (itemRes.data ?? []) as ItemWithCategory[];
-    items = rawItems.slice().sort((a, b) => (iMap[b.id] ?? 0) - (iMap[a.id] ?? 0));
+  // ── 공장/거래처 변경 시 UI 초기화 ─────────────────────────────────
+  $effect(() => {
+    store.factoryId;
+    store.selectedClientId;
+    activeCategoryId = 'all';
     selectedItemIds.clear();
     quantities.clear();
-  }
-
-  $effect(() => {
-    const fid = store.factoryId;
-    const cid = store.selectedClientId;
-    if (fid && cid) loadData(fid, cid);
+    editingItemId = null;
+    numpadValue = '';
   });
 
   // ── 파생값 ──────────────────────────────────────────────────────
   let filteredItems = $derived(
     activeCategoryId === 'all'
-      ? items
-      : items.filter(i => i.category_id === activeCategoryId)
+      ? store.items
+      : store.items.filter(i => i.category_id === activeCategoryId)
   );
 
   let isAllSelected = $derived(
     filteredItems.length > 0 &&
-    filteredItems.filter(i => (inventoryMap[i.id] ?? 0) > 0).length > 0 &&
-    filteredItems.filter(i => (inventoryMap[i.id] ?? 0) > 0).every(i => selectedItemIds.has(i.id))
+    filteredItems.filter(i => (store.inventoryMap[i.id] ?? 0) > 0).length > 0 &&
+    filteredItems.filter(i => (store.inventoryMap[i.id] ?? 0) > 0).every(i => selectedItemIds.has(i.id))
   );
 
   let selectedEntries = $derived(
     [...selectedItemIds].flatMap(itemId => {
-      const item = items.find(i => i.id === itemId);
+      const item = store.items.find(i => i.id === itemId);
       if (!item) return [];
-      const qty = quantities.get(itemId) ?? (inventoryMap[itemId] ?? 0);
+      const qty = quantities.get(itemId) ?? (store.inventoryMap[itemId] ?? 0);
       return [{ itemId, itemName: item.nickname ?? item.name_ko, categoryName: item.categories?.name ?? '', quantity: qty }];
     })
   );
@@ -116,7 +115,7 @@
   }
 
   function toggleItem(itemId: string) {
-    const available = inventoryMap[itemId] ?? 0;
+    const available = store.inventoryMap[itemId] ?? 0;
     if (available === 0) return;
     if (selectedItemIds.has(itemId)) {
       selectedItemIds.delete(itemId);
@@ -128,14 +127,14 @@
   }
 
   function toggleSelectAll() {
-    const available = filteredItems.filter(i => (inventoryMap[i.id] ?? 0) > 0);
+    const available = filteredItems.filter(i => (store.inventoryMap[i.id] ?? 0) > 0);
     if (isAllSelected) {
       selectedItemIds.clear();
       quantities.clear();
     } else {
       for (const item of available) {
         selectedItemIds.add(item.id);
-        quantities.set(item.id, inventoryMap[item.id] ?? 0);
+        quantities.set(item.id, store.inventoryMap[item.id] ?? 0);
       }
     }
   }
@@ -146,7 +145,7 @@
   }
 
   function adjustQty(itemId: string, delta: number) {
-    const max = inventoryMap[itemId] ?? 0;
+    const max = store.inventoryMap[itemId] ?? 0;
     const cur = quantities.get(itemId) ?? max;
     const next = Math.max(0, Math.min(max, cur + delta));
     if (next === 0) { selectedItemIds.delete(itemId); quantities.delete(itemId); }
@@ -171,7 +170,7 @@
     if (!editingItemId) return;
     const n = parseInt(val, 10);
     if (isNaN(n) || n <= 0) { closeNumpadModal(); return; }
-    const max = inventoryMap[editingItemId] ?? 0;
+    const max = store.inventoryMap[editingItemId] ?? 0;
     const clamped = Math.min(n, max);
     quantities.set(editingItemId, clamped);
     closeNumpadModal();
@@ -180,10 +179,33 @@
   async function executeShipout() {
     if (!store.factoryId || !store.selectedClientId || selectedEntries.length === 0) return;
     applying = true;
-    try {
-      const session = await getSession();
-      if (!session) return;
 
+    const session = await getSession();
+    if (!session) { applying = false; return; }
+
+    // RPC 실행 전: 서버 현재값 전체 조회
+    const { data: liveInv } = await getInventory(store.factoryId, store.selectedClientId);
+    const liveMap: Record<string, number> = {};
+    for (const row of liveInv ?? []) liveMap[row.item_id] = row.quantity;
+
+    const changed: ExternalChangeEntry[] = [];
+    for (const entry of selectedEntries) {
+      const localQty = store.inventoryMap[entry.itemId] ?? 0;
+      const liveQty  = liveMap[entry.itemId] ?? 0;
+      if (liveQty !== localQty) {
+        changed.push({ itemId: entry.itemId, itemName: entry.itemName, localQty, liveQty, shipQty: entry.quantity });
+      }
+    }
+
+    if (changed.length > 0) {
+      bulkUpdateInventory(changed.map(c => ({ item_id: c.itemId, new_qty: c.liveQty })));
+      applying = false;
+      const confirmed = await askExternalChange(changed);
+      if (!confirmed) return;
+      applying = true;
+    }
+
+    try {
       const itemsPayload = selectedEntries.map(e => ({ item_id: e.itemId, quantity: e.quantity }));
       const { data, error } = await executeShipoutRPC(
         store.factoryId, store.selectedClientId, itemsPayload, session.user.id
@@ -195,12 +217,12 @@
           // 충돌 품목명 파싱
           const match = (error.message ?? '').match(/item_id:([\w-]+)/);
           if (match) {
-            const conflictItem = items.find(i => i.id === match[1]);
+            const conflictItem = store.items.find(i => i.id === match[1]);
             conflictItemName = conflictItem?.nickname ?? conflictItem?.name_ko ?? '알 수 없음';
           } else {
             conflictItemName = '일부 품목';
           }
-          await loadData(store.factoryId, store.selectedClientId);
+          loadData(store.factoryId, store.selectedClientId);
           showSlipModal = false;
           showMobilePanel = false;
           showConflictModal = true;
@@ -210,10 +232,7 @@
 
       // 재고 로컬 반영
       if (data && typeof data === 'object' && 'items' in data) {
-        const newMap = { ...inventoryMap };
-        for (const r of (data as { items: { item_id: string; new_qty: number }[] }).items) newMap[r.item_id] = r.new_qty;
-        inventoryMap = newMap;
-        items = items.slice().sort((a, b) => (inventoryMap[b.id] ?? 0) - (inventoryMap[a.id] ?? 0));
+        bulkUpdateInventory((data as { items: { item_id: string; new_qty: number }[] }).items);
       }
 
       selectedItemIds.clear();
@@ -245,7 +264,7 @@
           {activeCategoryId === 'all' ? 'bg-primary text-primary-content' : 'text-base-content/50 hover:bg-base-200'}"
         onclick={() => selectCategory('all')}
       >전체</button>
-      {#each categories as cat (cat.id)}
+      {#each store.categories as cat (cat.id)}
         <button
           type="button"
           class="shrink-0 px-6 h-full text-base font-black transition-colors
@@ -297,8 +316,8 @@
       {:else}
         {#each filteredItems as item (item.id)}
           {@const isSel = selectedItemIds.has(item.id)}
-          {@const qty = quantities.get(item.id) ?? (inventoryMap[item.id] ?? 0)}
-          {@const stock = inventoryMap[item.id] ?? 0}
+          {@const qty = quantities.get(item.id) ?? (store.inventoryMap[item.id] ?? 0)}
+          {@const stock = store.inventoryMap[item.id] ?? 0}
           {@const isEmpty = stock === 0}
           <div
             role="button" tabindex={isEmpty ? -1 : 0}
@@ -467,8 +486,8 @@
 
 <!-- 숫자패드 모달 -->
 {#if showNumpadModal && editingItemId !== null}
-  {@const modalItem = items.find(i => i.id === editingItemId)}
-  {@const maxQty = inventoryMap[editingItemId] ?? 0}
+  {@const modalItem = store.items.find(i => i.id === editingItemId)}
+  {@const maxQty = store.inventoryMap[editingItemId] ?? 0}
   {@const numpadNum = numpadValue !== '' ? parseInt(numpadValue, 10) : null}
   <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
     role="button" tabindex="-1"
@@ -622,6 +641,66 @@
         class="btn btn-warning w-full font-black"
         onclick={closeConflictModal}
       >확인</button>
+    </div>
+  </div>
+{/if}
+
+<!-- 외부 변경 확인 모달: 다른 기기에서 재고가 바뀐 경우 출고 여부 확인 -->
+{#if showExternalChangeModal && externalChangeEntries.length > 0}
+  <div class="fixed inset-0 bg-black/50 z-100 flex items-center justify-center p-4">
+    <div class="bg-base-100 rounded-2xl shadow-2xl max-w-sm w-full p-6 flex flex-col gap-4">
+      <div class="flex items-center gap-3">
+        <span class="w-10 h-10 rounded-full bg-warning/15 flex items-center justify-center shrink-0">
+          <Icon icon="heroicons:exclamation-triangle" class="w-5 h-5 text-warning" />
+        </span>
+        <h3 class="text-lg font-black text-base-content">다른 기기에서 재고 변경됨</h3>
+      </div>
+
+      <div class="flex flex-col gap-2 max-h-64 overflow-y-auto">
+        {#each externalChangeEntries as e (e.itemId)}
+          <div class="rounded-xl bg-base-200 p-3 text-sm flex flex-col gap-1.5">
+            <p class="font-black text-base-content truncate">{e.itemName}</p>
+            <div class="flex justify-between text-base-content/50">
+              <span>표시된 재고</span>
+              <span class="font-bold">{e.localQty}개</span>
+            </div>
+            <div class="flex justify-between font-bold text-warning">
+              <span>실제 현재 재고</span>
+              <span>
+                {e.liveQty}개
+                ({e.liveQty - e.localQty >= 0 ? '+' : ''}{e.liveQty - e.localQty})
+              </span>
+            </div>
+            <div class="flex justify-between border-t border-base-300 pt-1.5 text-base-content/50">
+              <span>출고 수량</span>
+              <span class="font-bold text-error">-{e.shipQty}개</span>
+            </div>
+            {#if e.liveQty < e.shipQty}
+              <p class="text-xs font-bold text-error">⚠️ 재고 부족 — 현재 {e.liveQty}개, 출고 요청 {e.shipQty}개</p>
+            {:else}
+              <div class="flex justify-between font-black">
+                <span>출고 후 재고</span>
+                <span class="text-primary">{e.liveQty - e.shipQty}개</span>
+              </div>
+            {/if}
+          </div>
+        {/each}
+      </div>
+
+      <p class="text-sm text-base-content/70">계속 출고를 진행하시겠습니까?</p>
+
+      <div class="flex gap-2">
+        <button
+          type="button"
+          class="btn btn-ghost flex-1 border border-base-300 font-bold"
+          onclick={cancelExternalChange}
+        >취소</button>
+        <button
+          type="button"
+          class="btn btn-primary flex-1 font-bold"
+          onclick={confirmExternalChange}
+        >출고하기</button>
+      </div>
     </div>
   </div>
 {/if}
