@@ -19,7 +19,9 @@
     errorMsg = '';
     loading = true;
     try {
-      await login(id, password);
+      const { error } = await login(id, password);
+      if (error) { errorMsg = '아이디 또는 비밀번호가 올바르지 않습니다.'; return; }
+      await initializeStore();
       goto('/laundry');
     } catch {
       errorMsg = '아이디 또는 비밀번호가 올바르지 않습니다.';
