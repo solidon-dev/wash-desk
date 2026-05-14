@@ -1,66 +1,63 @@
 <script lang="ts">
   import Icon from '@iconify/svelte';
   import DatePicker from '$lib/components/DatePicker.svelte';
-  import {
-    store, selectClient, updateShipment, removeShipment,
-    CLIENT_TYPE_BADGE, CLIENT_TYPE_LABEL, CLIENT_TYPE_ICON,
-    type Client, type Shipment, type ShipmentItem, type LaundryCategory,
-  } from '$lib/store.svelte';
+  import { store } from '$lib/store.svelte';
+  import { getShipouts, updateShipout, deleteShipout } from '$lib/api/shipouts';
+  import { getSession } from '$lib/api/auth';
 
   type QuickFilter = 'today' | 'week' | 'month' | 'custom';
 
-  // Date utility functions
-  function pad(n: number): string { return String(n).padStart(2, '0'); }
-
-  function dateToYMD(d: Date): string {
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  }
-
-  function todayYMD(): string { return dateToYMD(new Date()); }
-
-  function getWeekStart(): string {
+  // ── 날짜 유틸 ──────────────────────────────────────────────────
+  function pad(n: number) { return String(n).padStart(2, '0'); }
+  function dateToYMD(d: Date) { return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+  function todayYMD() { return dateToYMD(new Date()); }
+  function getWeekStart() {
     const now = new Date();
-    const day = now.getDay();
-    const ms = now.getTime() - day * 86400000;
-    return dateToYMD(new Date(ms));
+    return dateToYMD(new Date(now.getTime() - now.getDay() * 86400000));
   }
-
-  function getMonthStart(): string {
+  function getMonthStart() {
     const now = new Date();
-    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`;
+    return `${now.getFullYear()}-${pad(now.getMonth()+1)}-01`;
+  }
+  function formatDate(iso: string) {
+    const d = new Date(iso);
+    return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())}`;
+  }
+  function formatTime(iso: string) {
+    const d = new Date(iso);
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+  function formatDateLabel(ymd: string) {
+    const [y,m,d] = ymd.split('-');
+    return `${y}.${m}.${d}`;
+  }
+  function toLocalDatetimeValue(iso: string) {
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  // Component state
+  // ── 타입 ──────────────────────────────────────────────────────
+  type LogRow = {
+    id: string;
+    shipout_id: string;
+    client_id: string;
+    item_id: string;
+    quantity: number;
+    after_quantity: number | null;
+    processed_at: string;
+    items: { id: string; name_ko: string; nickname: string | null; categories: { id: string; name: string } | null } | null;
+  };
+  type ShipoutGroup = {
+    shipout_id: string;
+    client_id: string;
+    processed_at: string;
+    logs: LogRow[];
+  };
+
+  // ── 필터 상태 ──────────────────────────────────────────────────
   let quickFilter = $state<QuickFilter>('today');
   let fromDate = $state(todayYMD());
-  let toDate = $state(todayYMD());
-
-  let editingShipmentId = $state<string | null>(null);
-  let editPanelVisible = $state(false);
-  let editItems = $state<ShipmentItem[]>([]);
-  let editShippedAt = $state('');
-  let deleteConfirming = $state(false);
-
-  // 전표 출력
-  let showSlipModal = $state(false);
-  let slipShipment = $state<Shipment | null>(null);
-
-  function openSlip(shipment: Shipment, e: MouseEvent) {
-    e.stopPropagation();
-    slipShipment = shipment;
-    showSlipModal = true;
-  }
-
-  function printSlip() {
-    showSlipModal = false;
-  }
-
-  // Constants
-  const catColor: Record<string, string> = {
-    towel:   'badge-primary',
-    sheet:   'badge-secondary',
-    uniform: 'badge-warning',
-  };
+  let toDate   = $state(todayYMD());
 
   const quickFilters: { key: QuickFilter; label: string }[] = [
     { key: 'today', label: '오늘' },
@@ -68,130 +65,149 @@
     { key: 'month', label: '이번 달' },
   ];
 
-  // Helper functions
-  function getClientById(id: string) { return store.clients.find((c: Client) => c.id === id); }
-
-  function getShipmentsByDateRange(clientId: string | null, from: string, to: string): Shipment[] {
-    const fromTs = new Date(from).getTime(); const toTs = new Date(to).getTime();
-    return store.shipments.filter((s: Shipment) => {
-      const ts = new Date(s.shippedAt).getTime();
-      return ts >= fromTs && ts <= toTs && (clientId === null || s.clientId === clientId);
-    });
-  }
-
-  // Quick filter logic
   function applyQuick(key: QuickFilter) {
     quickFilter = key;
     const today = todayYMD();
-    if (key === 'today') {
-      fromDate = today; toDate = today;
-    } else if (key === 'week') {
-      fromDate = getWeekStart(); toDate = today;
-    } else if (key === 'month') {
-      fromDate = getMonthStart(); toDate = today;
+    if (key === 'today')      { fromDate = today; toDate = today; }
+    else if (key === 'week')  { fromDate = getWeekStart(); toDate = today; }
+    else if (key === 'month') { fromDate = getMonthStart(); toDate = today; }
+    loadShipouts();
+  }
+
+  // ── 데이터 ────────────────────────────────────────────────────
+  let rawLogs = $state<LogRow[]>([]);
+  let loading  = $state(false);
+
+  async function loadShipouts() {
+    if (!store.factoryId) return;
+    loading = true;
+    const { data } = await getShipouts(
+      store.factoryId,
+      store.selectedClientId ?? null,
+      fromDate, toDate
+    );
+    rawLogs = (data ?? []) as unknown as LogRow[];
+    loading = false;
+  }
+
+  // 거래처/공장/날짜 변경 시 자동 로드
+  $effect(() => {
+    const _fid = store.factoryId;
+    const _cid = store.selectedClientId;
+    const _f = fromDate;
+    const _t = toDate;
+    if (_fid) loadShipouts();
+  });
+
+  // shipout_id 기준으로 그룹핑 (최신 순)
+  let shipoutGroups = $derived<ShipoutGroup[]>((() => {
+    const map = new Map<string, ShipoutGroup>();
+    for (const log of rawLogs) {
+      if (!log.shipout_id) continue;
+      if (!map.has(log.shipout_id)) {
+        map.set(log.shipout_id, {
+          shipout_id: log.shipout_id,
+          client_id: log.client_id,
+          processed_at: log.processed_at,
+          logs: [],
+        });
+      }
+      map.get(log.shipout_id)!.logs.push(log);
     }
-  }
+    return [...map.values()].sort(
+      (a, b) => new Date(b.processed_at).getTime() - new Date(a.processed_at).getTime()
+    );})());
 
-  function onDateInput() { quickFilter = 'custom'; }
+  let totalItemCount   = $derived(rawLogs.reduce((s, l) => s + l.quantity, 0));
+  let uniqueClientCount = $derived(new Set(rawLogs.map(l => l.client_id)).size);
 
-  // Derived values
-  let shipments = $derived(
-    getShipmentsByDateRange(
-      store.selectedClientId,
-      `${fromDate}T00:00:00.000Z`,
-      `${toDate}T23:59:59.999Z`
-    ).sort((a, b) => new Date(b.shippedAt).getTime() - new Date(a.shippedAt).getTime())
-  );
+  // ── 수정 패널 ─────────────────────────────────────────────────
+  let editingShipoutId  = $state<string | null>(null);
+  let editPanelVisible  = $state(false);
+  let editItems         = $state<{ item_id: string; item_name: string; quantity: number; orig_qty: number }[]>([]);
+  let deleteConfirming  = $state(false);
+  let deleteRestoreInventory = $state(true); // 기본값: 재고 복구
+  let saving            = $state(false);
 
-  let totalItemCount = $derived(
-    shipments.reduce((s: number, sh: Shipment) => s + sh.items.reduce((a: number, i: ShipmentItem) => a + i.quantity, 0), 0)
-  );
-
-  let uniqueClientCount = $derived(
-    new Set(shipments.map((s: Shipment) => s.clientId)).size
-  );
-
-  // Edit panel functions
-  function toLocalDatetimeValue(isoStr: string): string {
-    const d = new Date(isoStr);
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }
-
-  function openEditPanel(shipment: { id: string; items: ShipmentItem[]; shippedAt: string }) {
-    editingShipmentId = shipment.id;
-    editItems = shipment.items.map((i) => ({ ...i }));
-    editShippedAt = toLocalDatetimeValue(shipment.shippedAt);
-    editPanelVisible = true;
+  function openEditPanel(group: ShipoutGroup) {
+    editingShipoutId = group.shipout_id;
+    editItems = group.logs.map(l => ({
+      item_id:   l.item_id,
+      item_name: l.items?.nickname ?? l.items?.name_ko ?? l.item_id,
+      quantity:  l.quantity,
+      orig_qty:  l.quantity,
+    }));
     deleteConfirming = false;
+    deleteRestoreInventory = true;
+    editPanelVisible = true;
   }
 
   function closeEditPanel() {
-    editPanelVisible = false;
-    editingShipmentId = null;
-    deleteConfirming = false;
+    editPanelVisible  = false;
+    editingShipoutId  = null;
+    deleteConfirming  = false;
   }
 
   function adjustEditQty(idx: number, delta: number) {
-    const item = editItems[idx];
-    if (!item) return;
-    const next = Math.max(0, item.quantity + delta);
-    editItems = editItems.map((it, i) => i === idx ? { ...it, quantity: next } : it);
+    editItems = editItems.map((it, i) =>
+      i === idx ? { ...it, quantity: Math.max(0, it.quantity + delta) } : it
+    );
   }
 
-  function saveEdit() {
-    if (!editingShipmentId) return;
-    updateShipment(editingShipmentId, {
-      items: editItems.filter((i) => i.quantity > 0),
-      shippedAt: new Date(editShippedAt).toISOString(),
-    });
+  async function saveEdit() {
+    if (!editingShipoutId) return;
+    saving = true;
+    const session = await getSession();
+    if (!session) { saving = false; return; }
+    const payload = editItems.map(i => ({ item_id: i.item_id, new_quantity: i.quantity }));
+    const { error } = await updateShipout(editingShipoutId, payload, session.user.id);
+    saving = false;
+    if (error) { alert('저장 실패: ' + error.message); return; }
     closeEditPanel();
+    await loadShipouts();
   }
 
-  function deleteShipment() {
-    if (!editingShipmentId) return;
-    removeShipment(editingShipmentId);
+  async function doDeleteShipout() {
+    if (!editingShipoutId) return;
+    saving = true;
+    const session = await getSession();
+    if (!session) { saving = false; return; }
+    const { error } = await deleteShipout(editingShipoutId, session.user.id, deleteRestoreInventory);
+    saving = false;
+    if (error) { alert('삭제 실패: ' + error.message); return; }
     closeEditPanel();
+    await loadShipouts();
   }
 
-  function reprintSlip() {
-    alert('Print slip feature is under development.');
+  // ── 전표 모달 ─────────────────────────────────────────────────
+  let showSlipModal  = $state(false);
+  let slipGroup      = $state<ShipoutGroup | null>(null);
+
+  function openSlip(group: ShipoutGroup, e: MouseEvent) {
+    e.stopPropagation();
+    slipGroup     = group;
+    showSlipModal = true;
   }
 
-  // ── 날짜 피커 ─────────────────────────────────
+  // ── 날짜 피커 ─────────────────────────────────────────────────
   let showDatePicker = $state(false);
-  let pickerTarget = $state<'from' | 'to'>('from');
-  let showEditDatePicker = $state(false);
+  let pickerTarget   = $state<'from' | 'to'>('from');
 
   function openPicker(target: 'from' | 'to') {
-    pickerTarget = target;
+    pickerTarget   = target;
     showDatePicker = true;
   }
 
-  function handleDateSelect(_target: 'from' | 'to' | 'single', ymd: string) {
-    if (pickerTarget === 'from') {
-      fromDate = ymd;
-      if (toDate < fromDate) toDate = fromDate;
-    } else {
-      toDate = ymd;
-      if (fromDate > toDate) fromDate = toDate;
-    }
+  function handleDateSelect(_t: 'from' | 'to' | 'single', ymd: string) {
+    if (pickerTarget === 'from') { fromDate = ymd; if (toDate < fromDate) toDate = fromDate; }
+    else                         { toDate   = ymd; if (fromDate > toDate) fromDate = toDate; }
     quickFilter = 'custom';
+    loadShipouts();
   }
 
-  function formatDateLabel(ymd: string): string {
-    const [y, m, d] = ymd.split('-');
-    return `${y}.${m}.${d}`;
-  }
-
-  // Format functions
-  function formatDate(isoStr: string): string {
-    const d = new Date(isoStr);
-    return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`;
-  }
-
-  function formatTime(isoStr: string): string {
-    const d = new Date(isoStr);
-    return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  // ── 거래처 이름 헬퍼 ──────────────────────────────────────────
+  function clientName(clientId: string) {
+    return store.clients.find((c: {id:string;name:string}) => c.id === clientId)?.name ?? '미확인';
   }
 </script>
 
@@ -199,10 +215,8 @@
 
 <div class="flex-1 flex flex-col min-h-0 relative">
 
-  <!-- ── 필터 헤더 ── -->
+  <!-- 필터 헤더 -->
   <div class="bg-base-100 border-b border-base-300 px-6 pt-5 pb-5 shrink-0 space-y-4">
-
-    <!-- 퀴필터 + 날짜 범위 한 줄 -->
     <div class="flex items-center gap-3 flex-wrap">
       <div class="join">
         {#each quickFilters as { key, label } (key)}
@@ -213,28 +227,24 @@
           >{label}</button>
         {/each}
       </div>
-
       <div class="flex items-center gap-2">
-        <button
-          type="button"
+        <button type="button"
           class="h-12 px-5 rounded-xl border border-base-300 bg-base-100 text-lg font-bold text-base-content hover:bg-base-200 transition-colors"
           onclick={() => openPicker('from')}
         >{formatDateLabel(fromDate)}</button>
         <span class="text-base-content/30 text-xl font-bold">—</span>
-        <button
-          type="button"
+        <button type="button"
           class="h-12 px-5 rounded-xl border border-base-300 bg-base-100 text-lg font-bold text-base-content hover:bg-base-200 transition-colors"
           onclick={() => openPicker('to')}
         >{formatDateLabel(toDate)}</button>
       </div>
-
     </div>
 
-    <!-- 요약 카드 3개 -->
+    <!-- 요약 카드 -->
     <div class="grid grid-cols-3 gap-3">
       <div class="bg-base-200 rounded-2xl px-4 py-4 text-center">
         <p class="text-sm font-bold text-base-content/40 mb-1">출고</p>
-        <p class="text-4xl font-black text-base-content">{shipments.length}<span class="text-base font-bold text-base-content/40 ml-1">건</span></p>
+        <p class="text-4xl font-black text-base-content">{shipoutGroups.length}<span class="text-base font-bold text-base-content/40 ml-1">건</span></p>
       </div>
       <div class="bg-base-200 rounded-2xl px-4 py-4 text-center">
         <p class="text-sm font-bold text-base-content/40 mb-1">수량</p>
@@ -245,29 +255,26 @@
         <p class="text-4xl font-black text-base-content">{uniqueClientCount}<span class="text-base font-bold text-base-content/40 ml-1">곳</span></p>
       </div>
     </div>
-
   </div>
 
-  <!-- ── 테이블 헤더 ── -->
-  {#if shipments.length > 0}
-    <div class="h-16 bg-base-200 border-b border-base-300 px-6 shrink-0 flex items-center">
-      <div class="w-48 shrink-0">
-        <span class="text-sm font-black text-base-content/40 uppercase tracking-wider">일시</span>
-      </div>
-      <div class="w-40 shrink-0">
-        <span class="text-sm font-black text-base-content/40 uppercase tracking-wider">거래처</span>
-      </div>
-      <div class="flex-1 min-w-0">
-        <span class="text-sm font-black text-base-content/40 uppercase tracking-wider">품목</span>
-      </div>
+  <!-- 테이블 헤더 -->
+  {#if shipoutGroups.length > 0}
+    <div class="h-14 bg-base-200 border-b border-base-300 px-6 shrink-0 flex items-center">
+      <div class="w-44 shrink-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider">일시</span></div>
+      <div class="w-40 shrink-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider">거래처</span></div>
+      <div class="flex-1 min-w-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider">품목</span></div>
       <div class="w-16 shrink-0"></div>
       <div class="w-16 shrink-0"></div>
     </div>
   {/if}
 
-  <!-- ── 출고 기록 목록 ── -->
+  <!-- 목록 -->
   <div class="flex-1 overflow-y-auto min-h-0">
-    {#if shipments.length === 0}
+    {#if loading}
+      <div class="flex items-center justify-center h-40">
+        <span class="loading loading-spinner loading-lg"></span>
+      </div>
+    {:else if shipoutGroups.length === 0}
       <div class="flex flex-col items-center justify-center h-full gap-3">
         <div class="w-14 h-14 rounded-2xl bg-base-200 flex items-center justify-center">
           <Icon icon="heroicons:clipboard-document-list" class="w-7 h-7 text-base-content/20" />
@@ -276,123 +283,88 @@
         <p class="text-xs text-base-content/30">날짜 범위를 변경하거나 출고를 추가하세요</p>
       </div>
     {:else}
-      {#each shipments as shipment (shipment.id)}
-        {@const client = getClientById(shipment.clientId)}
-        {@const shipTotal = shipment.items.reduce((a: number, i: ShipmentItem) => a + i.quantity, 0)}
-        {@const isEditing = editingShipmentId === shipment.id && editPanelVisible}
+      {#each shipoutGroups as group (group.shipout_id)}
+        {@const isEditing = editingShipoutId === group.shipout_id && editPanelVisible}
+        {@const shipTotal = group.logs.reduce((s, l) => s + l.quantity, 0)}
         <div
-          role="button"
-          tabindex="0"
-          class="flex items-center min-h-24 px-6 border-b border-base-200 transition-colors cursor-pointer
-            {isEditing
-              ? 'bg-primary/5 border-l-4 border-l-primary'
-              : 'hover:bg-base-200/60 border-l-4 border-l-transparent'}"
-          onclick={() => openEditPanel(shipment)}
-          onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') openEditPanel(shipment); }}
+          role="button" tabindex="0"
+          class="flex items-center min-h-24 px-6 border-b border-base-200 cursor-pointer transition-colors
+            {isEditing ? 'bg-primary/5 border-l-4 border-l-primary' : 'hover:bg-base-200/60 border-l-4 border-l-transparent'}"
+          onclick={() => isEditing ? closeEditPanel() : openEditPanel(group)}
+          onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (isEditing ? closeEditPanel() : openEditPanel(group))}
         >
-          <!-- 날짜/시간 -->
-          <div class="w-48 shrink-0">
+          <div class="w-44 shrink-0">
             <p class="text-lg font-bold text-base-content tabular-nums">
-              {formatDate(shipment.shippedAt)}<br/><span class="text-base font-bold text-base-content/50">{formatTime(shipment.shippedAt)}</span>
+              {formatDate(group.processed_at)}<br/>
+              <span class="text-base font-bold text-base-content/50">{formatTime(group.processed_at)}</span>
             </p>
           </div>
-
-          <!-- 거래처 -->
           <div class="w-40 shrink-0 pr-2">
-            {#if client}
-              <p class="text-xl font-black text-base-content truncate">{client.name}</p>
-            {:else}
-              <p class="text-lg text-base-content/30">미확인</p>
-            {/if}
+            <p class="text-xl font-black text-base-content truncate">{clientName(group.client_id)}</p>
           </div>
-
-          <!-- 품목 요약 -->
           <div class="flex-1 min-w-0">
-            <p class="text-lg text-base-content/60">{shipment.items.length}종 · <span class="font-black text-xl text-base-content">{shipTotal}개</span></p>
+            <p class="text-base text-base-content/60">
+              {group.logs.length}종 · <span class="font-black text-xl text-base-content">{shipTotal}개</span>
+            </p>
+            <p class="text-xs text-base-content/30 truncate mt-0.5">
+              {group.logs.map(l => l.items?.nickname ?? l.items?.name_ko ?? '').filter(Boolean).join(', ')}
+            </p>
           </div>
-
-          <!-- 편집 버튼 -->
           <div class="w-16 flex justify-center shrink-0">
             <button
-              aria-label="출고 수정"
-              class="btn btn-md btn-square
-                {isEditing ? 'btn-primary' : 'btn-ghost text-base-content/40 hover:text-base-content'}"
-              onclick={(e) => { e.stopPropagation(); if (isEditing) { closeEditPanel(); } else { openEditPanel(shipment); } }}
-            >
-              <Icon icon="heroicons:pencil-square" class="w-6 h-6" />
-            </button>
+              aria-label="수정"
+              class="btn btn-md btn-square {isEditing ? 'btn-primary' : 'btn-ghost text-base-content/40 hover:text-base-content'}"
+              onclick={(e) => { e.stopPropagation(); isEditing ? closeEditPanel() : openEditPanel(group); }}
+            ><Icon icon="heroicons:pencil-square" class="w-6 h-6" /></button>
           </div>
-
-          <!-- 전표 버튼 -->
           <div class="w-16 flex justify-center shrink-0">
             <button
-              aria-label="전표 출력"
+              aria-label="전표"
               class="btn btn-md btn-square btn-ghost text-base-content/40 hover:text-base-content"
-              onclick={(e) => openSlip(shipment, e)}
-            >
-              <Icon icon="heroicons:printer" class="w-6 h-6" />
-            </button>
+              onclick={(e) => openSlip(group, e)}
+            ><Icon icon="heroicons:printer" class="w-6 h-6" /></button>
           </div>
         </div>
       {/each}
     {/if}
   </div>
 
-  <!-- ── 수정 슬라이드 패널 ── -->
-  {#if editingShipmentId !== null}
-    <!-- 백드롭 -->
-    <button
-      class="absolute inset-0 bg-black/10 z-10 cursor-default"
-      onclick={closeEditPanel}
-      aria-label="패널 닫기"
-    ></button>
+  <!-- 수정 슬라이드 패널 -->
+  {#if editingShipoutId !== null}
+    <button class="absolute inset-0 bg-black/10 z-10 cursor-default" onclick={closeEditPanel} aria-label="닫기"></button>
+    <div class="absolute right-0 top-0 bottom-0 w-120 bg-base-100 shadow-2xl z-20 flex flex-col transition-transform duration-300
+      {editPanelVisible ? 'translate-x-0' : 'translate-x-full'}">
 
-    <!-- 슬라이드 패널 -->
-    <div
-      class="absolute right-0 top-0 bottom-0 w-[480px] bg-base-100 shadow-2xl z-20 flex flex-col
-        transition-transform duration-300
-        {editPanelVisible ? 'translate-x-0' : 'translate-x-full'}"
-    >
-      <!-- 패널 헤더 -->
       <div class="px-6 h-20 border-b border-base-200 flex items-center justify-between shrink-0">
         <div>
           <h3 class="text-xl font-black text-base-content">출고 수정</h3>
-          {#each store.shipments.filter((sh: Shipment) => sh.id === editingShipmentId) as s (s.id)}
-            <p class="text-sm font-bold text-base-content/40 mt-0.5">{formatDate(s.shippedAt)} {formatTime(s.shippedAt)}</p>
+          {#each shipoutGroups.filter(g => g.shipout_id === editingShipoutId) as g}
+            <p class="text-sm font-bold text-base-content/40 mt-0.5">{formatDate(g.processed_at)} {formatTime(g.processed_at)}</p>
           {/each}
         </div>
-        <button
-          aria-label="닫기"
-          class="btn btn-md btn-square btn-ghost text-base-content/50"
-          onclick={closeEditPanel}
-        >
+        <button class="btn btn-md btn-square btn-ghost text-base-content/50" onclick={closeEditPanel} aria-label="닫기">
           <Icon icon="heroicons:x-mark" class="w-6 h-6" />
         </button>
       </div>
 
       <div class="flex-1 overflow-y-auto min-h-0">
-
-        <!-- 품목 수량 수정 -->
         <div class="px-6 py-5 border-b border-base-200">
           <p class="text-sm font-black text-base-content/40 uppercase tracking-wider mb-3">품목 수량</p>
           <div class="space-y-2">
-            {#each editItems as item, idx (item.laundryItemId)}
+            {#each editItems as item, idx (item.item_id)}
               <div class="flex items-center gap-3 min-h-20 rounded-xl border border-base-200 px-4">
                 <div class="flex-1 min-w-0">
-                  <p class="text-xl font-bold text-base-content truncate">{item.itemName}</p>
+                  <p class="text-xl font-bold text-base-content truncate">{item.item_name}</p>
+                  {#if item.quantity === 0}
+                    <p class="text-xs text-error font-bold mt-0.5">0개 → 저장 시 삭제됩니다</p>
+                  {/if}
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                  <button
-                    aria-label="수량 감소"
-                    class="btn btn-md btn-square btn-ghost border border-base-300 font-black text-2xl"
-                    onclick={() => adjustEditQty(idx, -1)}
-                  >−</button>
-                  <span class="w-14 text-center text-3xl font-black text-primary tabular-nums">{item.quantity}</span>
-                  <button
-                    aria-label="수량 증가"
-                    class="btn btn-md btn-square btn-primary font-black text-2xl"
-                    onclick={() => adjustEditQty(idx, 1)}
-                  >+</button>
+                  <button aria-label="감소" class="btn btn-md btn-square btn-ghost border border-base-300 font-black text-2xl"
+                    onclick={() => adjustEditQty(idx, -1)}>−</button>
+                  <span class="w-14 text-center text-3xl font-black {item.quantity === 0 ? 'text-error' : 'text-primary'} tabular-nums">{item.quantity}</span>
+                  <button aria-label="증가" class="btn btn-md btn-square btn-primary font-black text-2xl"
+                    onclick={() => adjustEditQty(idx, 1)}>+</button>
                 </div>
               </div>
             {/each}
@@ -405,133 +377,135 @@
           </div>
         </div>
 
-        <!-- 출고 일시 -->
-        <div class="px-6 py-5 border-b border-base-200">
-          <p class="text-sm font-black text-base-content/40 uppercase tracking-wider mb-3">출고 일시</p>
-          <button
-            type="button"
-            class="h-14 px-4 w-full rounded-xl border border-base-300 bg-base-100 text-lg font-bold text-base-content hover:bg-base-200 transition-colors text-left"
-            onclick={() => showEditDatePicker = true}
-          >{editShippedAt.replace('T', ' ')}</button>
-        </div>
-
-        <!-- 삭제 확인 인라인 -->
-        {#if deleteConfirming}
-          <div class="px-6 py-4 bg-error/8 border-b border-error/15">
-            <p class="text-base font-black text-error mb-3">이 출고 기록을 삭제하시겠습니까?</p>
-            <div class="flex gap-2">
-              <button
-                class="btn btn-error btn-md flex-1 font-black text-lg"
-                onclick={deleteShipment}
-              >삭제 확인</button>
-              <button
-                class="btn btn-ghost btn-md flex-1 font-black text-lg border border-base-300"
-                onclick={() => (deleteConfirming = false)}
-              >취소</button>
-            </div>
-          </div>
-        {/if}
-
       </div>
 
-      <!-- 패널 하단 버튼 -->
       <div class="px-6 py-5 border-t border-base-200 flex gap-3 shrink-0">
-        <button
-          class="btn btn-primary flex-1 h-16 font-black text-xl"
-          onclick={saveEdit}
-        >저장</button>
-        <button
-          class="btn btn-outline btn-error h-16 px-6 font-black text-xl"
-          onclick={() => (deleteConfirming = !deleteConfirming)}
-        >
+        <button class="btn btn-primary flex-1 h-16 font-black text-xl" onclick={saveEdit} disabled={saving}>
+          {#if saving}<span class="loading loading-spinner loading-sm"></span>{:else}저장{/if}
+        </button>
+        <button class="btn btn-outline btn-error h-16 px-6 font-black text-xl" onclick={() => deleteConfirming = !deleteConfirming}>
           <Icon icon="heroicons:trash" class="w-6 h-6" />
         </button>
       </div>
     </div>
   {/if}
-
 </div>
 
-<!-- 전표 출력 모달 -->
-{#if showSlipModal && slipShipment}
-  {@const sc = getClientById(slipShipment.clientId)}
-  {@const slipTotal = slipShipment.items.reduce((a: number, i: ShipmentItem) => a + i.quantity, 0)}
-  <div
-    class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+<!-- 삭제 확인 모달 -->
+{#if deleteConfirming}
+  <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
     role="button" tabindex="-1"
-    onclick={() => showSlipModal = false}
-    onkeydown={(e) => e.key === 'Escape' && (showSlipModal = false)}
+    onclick={() => deleteConfirming = false}
+    onkeydown={(e) => e.key === 'Escape' && (deleteConfirming = false)}
     aria-label="닫기"
   >
-    <div
-      class="bg-base-100 rounded-2xl shadow-2xl w-96 flex flex-col max-h-[80vh] overflow-hidden"
+    <div class="bg-base-100 rounded-2xl shadow-2xl max-w-sm w-full p-6 flex flex-col gap-4"
       role="dialog" aria-modal="true"
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => e.stopPropagation()}
       tabindex="-1"
     >
-      <!-- 모달 헤더 -->
-      <div class="px-5 py-4 border-b border-base-200 flex items-center justify-between">
-        <span class="text-sm font-bold text-base-content">전표 미리보기</span>
-        <button type="button" class="btn btn-ghost btn-xs btn-circle" onclick={() => showSlipModal = false}>
-          <Icon icon="heroicons:x-mark" class="w-3.5 h-3.5" />
+      <div class="flex items-center gap-3">
+        <span class="w-10 h-10 rounded-full bg-error/15 flex items-center justify-center shrink-0">
+          <Icon icon="heroicons:trash" class="w-5 h-5 text-error" />
+        </span>
+        <h3 class="text-lg font-black text-base-content">출고 삭제</h3>
+      </div>
+      <p class="text-sm text-base-content/70 leading-relaxed">
+        이 출고 기록을 삭제하시겠습니까?
+      </p>
+      <div class="flex flex-col gap-2">
+        <button
+          type="button"
+          class="flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-colors {deleteRestoreInventory ? 'border-primary bg-primary/5' : 'border-base-300 bg-base-100'}"
+          onclick={() => deleteRestoreInventory = true}
+        >
+          <span class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 {deleteRestoreInventory ? 'border-primary' : 'border-base-300'}">
+            {#if deleteRestoreInventory}<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>{/if}
+          </span>
+          <div>
+            <p class="text-sm font-black text-base-content">재고 복구 후 삭제</p>
+            <p class="text-xs text-base-content/50">출고된 수량을 재고에 다시 더합니다</p>
+          </div>
+        </button>
+        <button
+          type="button"
+          class="flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-colors {!deleteRestoreInventory ? 'border-error bg-error/5' : 'border-base-300 bg-base-100'}"
+          onclick={() => deleteRestoreInventory = false}
+        >
+          <span class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 {!deleteRestoreInventory ? 'border-error' : 'border-base-300'}">
+            {#if !deleteRestoreInventory}<span class="w-2.5 h-2.5 rounded-full bg-error"></span>{/if}
+          </span>
+          <div>
+            <p class="text-sm font-black text-base-content">재고 유지 후 삭제</p>
+            <p class="text-xs text-base-content/50">재고는 그대로 두고 기록만 삭제합니다</p>
+          </div>
         </button>
       </div>
-
-      <!-- 전표 내용 (print-area) -->
-      <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto" id="slip-print-area">
-        <!-- 타이틀 -->
-        <div class="text-center border-b border-base-200 pb-4">
-          <p class="text-lg font-black text-base-content">출고 전표</p>
-          <p class="text-xs text-base-content/40 mt-1">{formatDate(slipShipment.shippedAt)} {formatTime(slipShipment.shippedAt)}</p>
-        </div>
-
-        <!-- 거래처 -->
-        <div class="flex justify-between text-sm">
-          <span class="text-base-content/50">거래처</span>
-          <span class="font-bold text-base-content">{sc?.name ?? '미확인'}</span>
-        </div>
-
-        <!-- 품목 목록 -->
-        <div class="border-t border-base-200 pt-3 space-y-2">
-          {#each slipShipment.items as item (item.laundryItemId)}
-            <div class="flex justify-between text-sm">
-              <span class="text-base-content">{item.itemName}</span>
-              <span class="font-bold tabular-nums">{item.quantity}개</span>
-            </div>
-          {/each}
-        </div>
-
-        <!-- 합계 -->
-        <div class="border-t-2 border-base-content pt-3 flex justify-between">
-          <span class="text-sm font-bold">합계</span>
-          <span class="text-lg font-black tabular-nums">{slipTotal}개</span>
-        </div>
-
-        {#if slipShipment.memo}
-          <p class="text-xs text-base-content/40 border-t border-base-200 pt-2">메모: {slipShipment.memo}</p>
-        {/if}
-      </div>
-
-      <!-- 버튼 -->
-      <div class="px-5 py-4 border-t border-base-200 flex gap-2">
-        <button
-          class="btn btn-ghost flex-1 font-bold border border-base-300"
-          onclick={() => showSlipModal = false}
-        >취소</button>
-        <button
-          class="btn btn-primary flex-1 font-bold"
-          onclick={printSlip}
-        >
-          <Icon icon="heroicons:printer" class="w-4 h-4" />
-          출력
+      <div class="flex gap-2">
+        <button class="btn btn-ghost flex-1 font-bold border border-base-300" onclick={() => deleteConfirming = false}>취소</button>
+        <button class="btn btn-error flex-1 font-black" onclick={doDeleteShipout} disabled={saving}>
+          {#if saving}<span class="loading loading-spinner loading-sm"></span>{:else}삭제 확인{/if}
         </button>
       </div>
     </div>
   </div>
 {/if}
 
-<!-- 날짜 피커 (필터용) -->
+<!-- 전표 모달 -->
+{#if showSlipModal && slipGroup}
+  {@const slipTotal = slipGroup.logs.reduce((s, l) => s + l.quantity, 0)}
+  <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+    role="button" tabindex="-1"
+    onclick={() => showSlipModal = false}
+    onkeydown={(e) => e.key === 'Escape' && (showSlipModal = false)}
+    aria-label="닫기"
+  >
+    <div class="bg-base-100 rounded-2xl shadow-2xl w-96 flex flex-col max-h-[80vh] overflow-hidden"
+      role="dialog" aria-modal="true"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
+      tabindex="-1"
+    >
+      <div class="px-5 py-4 border-b border-base-200 flex items-center justify-between">
+        <span class="text-sm font-bold">전표 미리보기</span>
+        <button type="button" class="btn btn-ghost btn-xs btn-circle" onclick={() => showSlipModal = false}>
+          <Icon icon="heroicons:x-mark" class="w-3.5 h-3.5" />
+        </button>
+      </div>
+      <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto">
+        <div class="text-center border-b border-base-200 pb-4">
+          <p class="text-lg font-black">출고 전표</p>
+          <p class="text-xs text-base-content/40 mt-1">{formatDate(slipGroup.processed_at)} {formatTime(slipGroup.processed_at)}</p>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-base-content/50">거래처</span>
+          <span class="font-bold">{clientName(slipGroup.client_id)}</span>
+        </div>
+        <div class="border-t border-base-200 pt-3 space-y-2">
+          {#each slipGroup.logs as log (log.id)}
+            <div class="flex justify-between text-sm">
+              <span>{log.items?.nickname ?? log.items?.name_ko ?? log.item_id}</span>
+              <span class="font-bold tabular-nums">{log.quantity}개</span>
+            </div>
+          {/each}
+        </div>
+        <div class="border-t-2 border-base-content pt-3 flex justify-between">
+          <span class="text-sm font-bold">합계</span>
+          <span class="text-lg font-black tabular-nums">{slipTotal}개</span>
+        </div>
+      </div>
+      <div class="px-5 py-4 border-t border-base-200 flex gap-2">
+        <button class="btn btn-ghost flex-1 font-bold border border-base-300" onclick={() => showSlipModal = false}>취소</button>
+        <button class="btn btn-primary flex-1 font-bold" onclick={() => showSlipModal = false}>
+          <Icon icon="heroicons:printer" class="w-4 h-4" />출력
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- 날짜 피커 -->
 <DatePicker
   show={showDatePicker}
   target={pickerTarget}
@@ -539,17 +513,4 @@
   {toDate}
   onselect={handleDateSelect}
   onclose={() => showDatePicker = false}
-/>
-
-<!-- 날짜 피커 (수정 패널용 datetime) -->
-<DatePicker
-  show={showEditDatePicker}
-  target="single"
-  mode="datetime"
-  fromDate={editShippedAt.slice(0,10)}
-  toDate={editShippedAt.slice(0,10)}
-  datetimeValue={editShippedAt}
-  onselect={() => {}}
-  ondatetimeselect={(v) => { editShippedAt = v; }}
-  onclose={() => showEditDatePicker = false}
 />
