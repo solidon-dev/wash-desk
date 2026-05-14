@@ -39,19 +39,21 @@
   // ── 타입 ──────────────────────────────────────────────────────
   type LogRow = {
     id: string;
-    shipout_id: string;
-    client_id: string;
     item_id: string;
+    inventory_id: string;
     quantity: number;
     after_quantity: number | null;
-    processed_at: string;
+    processed_at: string | null;
     items: { id: string; name_ko: string; nickname: string | null; categories: { id: string; name: string } | null } | null;
   };
   type ShipoutGroup = {
-    shipout_id: string;
+    id: string;           // shipouts.id
+    factory_id: string;
     client_id: string;
-    processed_at: string;
-    logs: LogRow[];
+    created_by: string | null;
+    created_at: string;
+    memo: string | null;
+    inventory_logs: LogRow[];
   };
 
   // ── 필터 상태 ──────────────────────────────────────────────────
@@ -75,8 +77,8 @@
   }
 
   // ── 데이터 ────────────────────────────────────────────────────
-  let rawLogs = $state<LogRow[]>([]);
-  let loading  = $state(false);
+  let shipoutGroups = $state<ShipoutGroup[]>([]);
+  let loading = $state(false);
 
   async function loadShipouts() {
     if (!store.factoryId) return;
@@ -86,7 +88,7 @@
       store.selectedClientId ?? null,
       fromDate, toDate
     );
-    rawLogs = (data ?? []) as unknown as LogRow[];
+    shipoutGroups = (data ?? []) as unknown as ShipoutGroup[];
     loading = false;
   }
 
@@ -99,27 +101,8 @@
     if (_fid) loadShipouts();
   });
 
-  // shipout_id 기준으로 그룹핑 (최신 순)
-  let shipoutGroups = $derived<ShipoutGroup[]>((() => {
-    const map = new Map<string, ShipoutGroup>();
-    for (const log of rawLogs) {
-      if (!log.shipout_id) continue;
-      if (!map.has(log.shipout_id)) {
-        map.set(log.shipout_id, {
-          shipout_id: log.shipout_id,
-          client_id: log.client_id,
-          processed_at: log.processed_at,
-          logs: [],
-        });
-      }
-      map.get(log.shipout_id)!.logs.push(log);
-    }
-    return [...map.values()].sort(
-      (a, b) => new Date(b.processed_at).getTime() - new Date(a.processed_at).getTime()
-    );})());
-
-  let totalItemCount   = $derived(rawLogs.reduce((s, l) => s + l.quantity, 0));
-  let uniqueClientCount = $derived(new Set(rawLogs.map(l => l.client_id)).size);
+  let totalItemCount    = $derived(shipoutGroups.reduce((s, g) => s + g.inventory_logs.reduce((ss, l) => ss + l.quantity, 0), 0));
+  let uniqueClientCount = $derived(new Set(shipoutGroups.map(g => g.client_id)).size);
 
   // ── 수정 패널 ─────────────────────────────────────────────────
   let editingShipoutId  = $state<string | null>(null);
@@ -130,8 +113,8 @@
   let saving            = $state(false);
 
   function openEditPanel(group: ShipoutGroup) {
-    editingShipoutId = group.shipout_id;
-    editItems = group.logs.map(l => ({
+    editingShipoutId = group.id;
+    editItems = group.inventory_logs.map(l => ({
       item_id:   l.item_id,
       item_name: l.items?.nickname ?? l.items?.name_ko ?? l.item_id,
       quantity:  l.quantity,
@@ -283,9 +266,9 @@
         <p class="text-xs text-base-content/30">날짜 범위를 변경하거나 출고를 추가하세요</p>
       </div>
     {:else}
-      {#each shipoutGroups as group (group.shipout_id)}
-        {@const isEditing = editingShipoutId === group.shipout_id && editPanelVisible}
-        {@const shipTotal = group.logs.reduce((s, l) => s + l.quantity, 0)}
+      {#each shipoutGroups as group (group.id)}
+        {@const isEditing = editingShipoutId === group.id && editPanelVisible}
+        {@const shipTotal = group.inventory_logs.reduce((s, l) => s + l.quantity, 0)}
         <div
           role="button" tabindex="0"
           class="flex items-center min-h-24 px-6 border-b border-base-200 cursor-pointer transition-colors
@@ -295,8 +278,8 @@
         >
           <div class="w-44 shrink-0">
             <p class="text-lg font-bold text-base-content tabular-nums">
-              {formatDate(group.processed_at)}<br/>
-              <span class="text-base font-bold text-base-content/50">{formatTime(group.processed_at)}</span>
+              {formatDate(group.created_at)}<br/>
+              <span class="text-base font-bold text-base-content/50">{formatTime(group.created_at)}</span>
             </p>
           </div>
           <div class="w-40 shrink-0 pr-2">
@@ -304,10 +287,10 @@
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-base text-base-content/60">
-              {group.logs.length}종 · <span class="font-black text-xl text-base-content">{shipTotal}개</span>
+              {group.inventory_logs.length}종 · <span class="font-black text-xl text-base-content">{shipTotal}개</span>
             </p>
             <p class="text-xs text-base-content/30 truncate mt-0.5">
-              {group.logs.map(l => l.items?.nickname ?? l.items?.name_ko ?? '').filter(Boolean).join(', ')}
+              {group.inventory_logs.map(l => l.items?.nickname ?? l.items?.name_ko ?? '').filter(Boolean).join(', ')}
             </p>
           </div>
           <div class="w-16 flex justify-center shrink-0">
@@ -338,8 +321,8 @@
       <div class="px-6 h-20 border-b border-base-200 flex items-center justify-between shrink-0">
         <div>
           <h3 class="text-xl font-black text-base-content">출고 수정</h3>
-          {#each shipoutGroups.filter(g => g.shipout_id === editingShipoutId) as g}
-            <p class="text-sm font-bold text-base-content/40 mt-0.5">{formatDate(g.processed_at)} {formatTime(g.processed_at)}</p>
+          {#each shipoutGroups.filter(g => g.id === editingShipoutId) as g}
+              <p class="text-sm font-bold text-base-content/40 mt-0.5">{formatDate(g.created_at)} {formatTime(g.created_at)}</p>
           {/each}
         </div>
         <button class="btn btn-md btn-square btn-ghost text-base-content/50" onclick={closeEditPanel} aria-label="닫기">
@@ -454,7 +437,7 @@
 
 <!-- 전표 모달 -->
 {#if showSlipModal && slipGroup}
-  {@const slipTotal = slipGroup.logs.reduce((s, l) => s + l.quantity, 0)}
+  {@const slipTotal = slipGroup.inventory_logs.reduce((s, l) => s + l.quantity, 0)}
   <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
     role="button" tabindex="-1"
     onclick={() => showSlipModal = false}
@@ -476,14 +459,14 @@
       <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto">
         <div class="text-center border-b border-base-200 pb-4">
           <p class="text-lg font-black">출고 전표</p>
-          <p class="text-xs text-base-content/40 mt-1">{formatDate(slipGroup.processed_at)} {formatTime(slipGroup.processed_at)}</p>
+          <p class="text-xs text-base-content/40 mt-1">{formatDate(slipGroup.created_at)} {formatTime(slipGroup.created_at)}</p>
         </div>
         <div class="flex justify-between text-sm">
           <span class="text-base-content/50">거래처</span>
           <span class="font-bold">{clientName(slipGroup.client_id)}</span>
         </div>
         <div class="border-t border-base-200 pt-3 space-y-2">
-          {#each slipGroup.logs as log (log.id)}
+          {#each slipGroup.inventory_logs as log (log.id)}
             <div class="flex justify-between text-sm">
               <span>{log.items?.nickname ?? log.items?.name_ko ?? log.item_id}</span>
               <span class="font-bold tabular-nums">{log.quantity}개</span>

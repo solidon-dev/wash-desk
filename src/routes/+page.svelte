@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { login, authStore } from '$lib/auth.svelte';
+  import { login, getSession } from '$lib/api/auth';
   import { onMount } from 'svelte';
 
   let id = $state('');
@@ -8,8 +8,9 @@
   let errorMsg = $state('');
   let loading = $state(false);
 
-  onMount(() => {
-    if (authStore.user) goto('/laundry');
+  onMount(async () => {
+    const session = await getSession();
+    if (session) goto('/laundry');
   });
 
   async function handleLogin(e: Event) {
@@ -17,7 +18,7 @@
     errorMsg = '';
     loading = true;
     try {
-      await login(id + '@mail.com', password);
+      await login(id, password);
       goto('/laundry');
     } catch {
       errorMsg = '아이디 또는 비밀번호가 올바르지 않습니다.';
@@ -66,7 +67,7 @@
 
       <button
         type="submit"
-        class="btn btn-neutral w-full mt-1"
+        class="btn btn-primary w-full mt-1"
         disabled={loading}
       >
         {#if loading}

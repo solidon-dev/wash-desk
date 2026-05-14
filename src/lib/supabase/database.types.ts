@@ -16,32 +16,32 @@ export type Database = {
     Tables: {
       categories: {
         Row: {
+          client_id: string
           created_at: string
-          factory_id: string
           id: string
           name: string
           sort_order: number
         }
         Insert: {
+          client_id: string
           created_at?: string
-          factory_id: string
           id?: string
           name: string
           sort_order?: number
         }
         Update: {
+          client_id?: string
           created_at?: string
-          factory_id?: string
           id?: string
           name?: string
           sort_order?: number
         }
         Relationships: [
           {
-            foreignKeyName: "categories_factory_id_fkey"
-            columns: ["factory_id"]
+            foreignKeyName: "categories_client_id_fkey"
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "factories"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -174,6 +174,7 @@ export type Database = {
       }
       inventory_logs: {
         Row: {
+          after_quantity: number | null
           client_id: string
           created_at: string
           created_by: string | null
@@ -185,8 +186,10 @@ export type Database = {
           note: string | null
           processed_at: string
           quantity: number
+          shipout_id: string | null
         }
         Insert: {
+          after_quantity?: number | null
           client_id: string
           created_at?: string
           created_by?: string | null
@@ -198,8 +201,10 @@ export type Database = {
           note?: string | null
           processed_at?: string
           quantity: number
+          shipout_id?: string | null
         }
         Update: {
+          after_quantity?: number | null
           client_id?: string
           created_at?: string
           created_by?: string | null
@@ -211,6 +216,7 @@ export type Database = {
           note?: string | null
           processed_at?: string
           quantity?: number
+          shipout_id?: string | null
         }
         Relationships: [
           {
@@ -246,6 +252,13 @@ export type Database = {
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_logs_shipout_id_fkey"
+            columns: ["shipout_id"]
+            isOneToOne: false
+            referencedRelation: "shipouts"
             referencedColumns: ["id"]
           },
         ]
@@ -492,8 +505,8 @@ export type Database = {
       items: {
         Row: {
           category_id: string
+          client_id: string
           created_at: string
-          factory_id: string
           id: string
           name_en: string | null
           name_ko: string
@@ -503,8 +516,8 @@ export type Database = {
         }
         Insert: {
           category_id: string
+          client_id: string
           created_at?: string
-          factory_id: string
           id?: string
           name_en?: string | null
           name_ko: string
@@ -514,8 +527,8 @@ export type Database = {
         }
         Update: {
           category_id?: string
+          client_id?: string
           created_at?: string
-          factory_id?: string
           id?: string
           name_en?: string | null
           name_ko?: string
@@ -532,7 +545,59 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "items_factory_id_fkey"
+            foreignKeyName: "items_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipouts: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          factory_id: string
+          id: string
+          memo: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          factory_id: string
+          id?: string
+          memo?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          factory_id?: string
+          id?: string
+          memo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipouts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipouts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipouts_factory_id_fkey"
             columns: ["factory_id"]
             isOneToOne: false
             referencedRelation: "factories"
@@ -585,16 +650,46 @@ export type Database = {
     Functions: {
       create_item_with_price: {
         Args: {
-          p_category_id: string
           p_client_id: string
-          p_effective_from: string
-          p_factory_id: string
-          p_name_en: string
+          p_category_id: string
           p_name_ko: string
-          p_name_zh: string
-          p_nickname: string
-          p_sort_order: number
-          p_unit_price: number
+          p_unit_price?: number
+        }
+        Returns: Json
+      }
+      delete_shipout: {
+        Args: {
+          p_shipout_id: string
+          p_deleted_by: string
+          p_restore_inventory?: boolean
+        }
+        Returns: Json
+      }
+      execute_shipout: {
+        Args: {
+          p_factory_id: string
+          p_client_id: string
+          p_items: Json
+          p_created_by: string
+          p_memo?: string | null
+        }
+        Returns: Json
+      }
+      process_inventory_delta: {
+        Args: {
+          p_factory_id: string
+          p_client_id: string
+          p_item_id: string
+          p_delta: number
+          p_created_by: string
+        }
+        Returns: Json
+      }
+      update_shipout: {
+        Args: {
+          p_shipout_id: string
+          p_items: Json
+          p_updated_by: string
         }
         Returns: Json
       }

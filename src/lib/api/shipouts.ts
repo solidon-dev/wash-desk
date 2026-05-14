@@ -20,17 +20,32 @@ export async function getShipouts(
   fromDate: string,   // 'YYYY-MM-DD'
   toDate:   string
 ) {
-  // deleted_at IS NULL 인 out 로그를 shipout_id 기준으로 가져옴
+  // shipouts 테이블 기준 조회 (deleted_at IS NULL = 삭제 안 된 것)
+  // inventory_logs 는 shipout_id FK 로 연결
   let q = supabase
-    .from('inventory_logs')
-    .select('*, items(id, name_ko, nickname, categories(id, name))')
+    .from('shipouts')
+    .select(`
+      id,
+      factory_id,
+      client_id,
+      created_by,
+      created_at,
+      memo,
+      inventory_logs (
+        id,
+        item_id,
+        inventory_id,
+        quantity,
+        after_quantity,
+        processed_at,
+        items ( id, name_ko, nickname, categories ( id, name ) )
+      )
+    `)
     .eq('factory_id', factoryId)
-    .eq('log_type', 'out')
     .is('deleted_at', null)
-    .not('shipout_id', 'is', null)
-    .gte('processed_at', `${fromDate}T00:00:00.000Z`)
-    .lte('processed_at', `${toDate}T23:59:59.999Z`)
-    .order('processed_at', { ascending: false });
+    .gte('created_at', `${fromDate}T00:00:00.000Z`)
+    .lte('created_at', `${toDate}T23:59:59.999Z`)
+    .order('created_at', { ascending: false });
 
   if (clientId) q = q.eq('client_id', clientId);
   return q;

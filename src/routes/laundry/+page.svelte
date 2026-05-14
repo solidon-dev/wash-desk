@@ -129,7 +129,8 @@
         store.factoryId,
         store.selectedClientId,
         selectedItemId,
-        num
+        num,
+        session.user.id
       );
 
       if (invErr) {
