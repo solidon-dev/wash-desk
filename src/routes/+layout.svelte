@@ -4,65 +4,47 @@
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import Icon from '@iconify/svelte';
-  import { store, selectClient, NAV_ITEMS } from '$lib/store.svelte';
-  import { getSession } from '$lib/api/auth';
-  import { getClients } from '$lib/api/clients';
-  import { getFactories } from '$lib/api/factories';
+  import { store, initializeStore, applyFactory, switchClient, resetStore, loadData, NAV_ITEMS } from '$lib/store.svelte';
   import { supabase } from '$lib/supabase/client';
 
   let { children } = $props();
   const currentPath = $derived($page.url.pathname);
-  let showClientModal = $state(false);
+  let showClientModal  = $state(false);
   let showFactoryModal = $state(false);
-
-  async function loadClients(factoryId: string) {
-    const { data: clients } = await getClients(factoryId);
-    if (clients) {
-      store.clients = clients;
-      store.selectedClientId = clients[0]?.id ?? null;
-    }
-  }
+  let appLoading = $state(true);
 
   onMount(async () => {
-    const session = await getSession();
-    if (!session && currentPath !== '/') { goto('/'); return; }
-    if (!session) return;
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('factory_id, role')
-      .eq('id', session.user.id)
-      .single();
-
-    store.isSuperAdmin = profile?.role === 'super_admin';
-
-    if (store.isSuperAdmin) {
-      const { data: factories } = await getFactories();
-      store.factories = factories ?? [];
-      const firstId = store.factories[0]?.id ?? null;
-      if (!firstId) return;
-      store.factoryId = firstId;
-      await loadClients(firstId);
-    } else {
-      if (!profile?.factory_id) return;
-      store.factoryId = profile.factory_id;
-      await loadClients(profile.factory_id);
+    try {
+      const ok = await initializeStore();
+      if (!ok && currentPath !== '/') goto('/');
+    } finally {
+      appLoading = false;
     }
   });
 
   async function pickFactory(id: string) {
-    store.factoryId = id;
-    store.selectedClientId = null;
     showFactoryModal = false;
-    await loadClients(id);
+    await applyFactory(id);
   }
 
-  function pickClient(id: string) {
-    selectClient(id);
+  async function pickClient(id: string) {
     showClientModal = false;
+    await switchClient(id);
   }
 
-  const selectedClient = $derived(store.clients.find(c => c.id === store.selectedClientId) ?? null);
+  async function refresh() {
+    if (store.factoryId && store.selectedClientId) {
+      await loadData(store.factoryId, store.selectedClientId);
+    }
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    resetStore();
+    goto('/');
+  }
+
+  const selectedClient  = $derived(store.clients.find(c => c.id === store.selectedClientId) ?? null);
   const selectedFactory = $derived(store.factories.find(f => f.id === store.factoryId) ?? null);
 </script>
 
@@ -112,10 +94,40 @@
         </button>
       {/if}
 
+      <!-- 새로고침 버튼 -->
+      <button
+        type="button"
+        class="flex items-center justify-center w-12 h-full hover:bg-white/10 transition-colors shrink-0 border-l border-white/20"
+        onclick={refresh}
+        title="새로고침"
+      >
+        {#if store.dataLoading || appLoading}
+          <span class="loading loading-spinner loading-sm text-white/60"></span>
+        {:else}
+          <Icon icon="heroicons:arrow-path" class="w-5 h-5 text-white/60" />
+        {/if}
+      </button>
+
+      <!-- 로그아웃 버튼 -->
+      <button
+        type="button"
+        class="flex items-center justify-center w-12 h-full hover:bg-red-500/20 transition-colors shrink-0 border-l border-white/20"
+        onclick={handleLogout}
+        title="로그아웃"
+      >
+        <Icon icon="heroicons:arrow-right-on-rectangle" class="w-5 h-5 text-white/60" />
+      </button>
+
     </header>
   {/if}
   <div class="flex-1 min-h-0 min-w-0 flex flex-col">
-    {@render children()}
+    {#if appLoading}
+      <div class="flex flex-col items-center justify-center flex-1 gap-3 text-base-content/30">
+        <span class="loading loading-spinner loading-lg"></span>
+      </div>
+    {:else}
+      {@render children()}
+    {/if}
   </div>
 </div>
 
