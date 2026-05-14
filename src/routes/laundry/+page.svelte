@@ -1,9 +1,9 @@
 <script lang="ts">
   import Icon from '@iconify/svelte';
   import { fly } from 'svelte/transition';
-  import { onMount, tick } from 'svelte';
+  import { onMount } from 'svelte';
   import { store, loadData, updateInventoryItem, type ItemWithCategory } from '$lib/store.svelte';
-  import { processInventoryDelta } from '$lib/api/inventory';
+  import { processInventoryDelta, getInventoryItem } from '$lib/api/inventory';
   import { addInventoryLog, getInventoryLogs } from '$lib/api/inventory_logs';
   import { getSession } from '$lib/api/auth';
   import type { InventoryLog } from '$lib/supabase/types';
@@ -14,9 +14,26 @@
   let inputValue = $state('');
   let applying = $state(false);
 
-  // ── 충돌 모달 ────────────────────────────────────────────────────
-  let showConflictModal = $state(false);
-  function closeConflictModal() { showConflictModal = false; }
+  // ── 외부 변경 확인 모달 ──────────────────────────────────────
+  let showExternalChangeModal = $state(false);
+  let externalChangeInfo = $state<{ localQty: number; liveQty: number; delta: number } | null>(null);
+  let _resolveExternalChange: ((confirmed: boolean) => void) | null = null;
+
+  function askExternalChange(localQty: number, liveQty: number, delta: number): Promise<boolean> {
+    externalChangeInfo = { localQty, liveQty, delta };
+    showExternalChangeModal = true;
+    return new Promise(resolve => { _resolveExternalChange = resolve; });
+  }
+  function confirmExternalChange() {
+    showExternalChangeModal = false;
+    _resolveExternalChange?.(true);
+    _resolveExternalChange = null;
+  }
+  function cancelExternalChange() {
+    showExternalChangeModal = false;
+    _resolveExternalChange?.(false);
+    _resolveExternalChange = null;
+  }
 
   // ── 60초 자동 갱신 ───────────────────────────────────────────────
   onMount(() => {
@@ -80,13 +97,30 @@
     if (!store.factoryId || !store.selectedClientId || !selectedItemId) return;
 
     applying = true;
+
+    const session = await getSession();
+    if (!session) { applying = false; return; }
+
+    // ── RPC 실행 전: 서버 현재값 단건 조회 ────────────────────────────
+    const localQty = store.inventoryMap[selectedItemId] ?? 0;
+    const { data: liveRow } = await getInventoryItem(
+      store.factoryId, store.selectedClientId, selectedItemId
+    );
+    const liveQty = liveRow?.quantity ?? localQty;
+
+    if (liveQty !== localQty) {
+      // 외부 변경 감지: 로컬 먼저 동기화 후 모달로 확인 요청
+      updateInventoryItem(selectedItemId, liveQty);
+      applying = false; // 모달 표시 중 스피너 끄기
+
+      const confirmed = await askExternalChange(localQty, liveQty, num);
+      if (!confirmed) return; // 취소: 로컬은 이미 liveQty로 동기화됨
+
+      applying = true; // 확인 후 다시 스피너
+    }
+
+    // ── RPC 실행 ────────────────────────────────────────────────────
     try {
-      const session = await getSession();
-      if (!session) return;
-
-      // 적용 직전의 로컬 표시값을 기억 (외부 변경 감지용)
-      const localQtyBeforeApply = store.inventoryMap[selectedItemId] ?? 0;
-
       const { data: inv, error: invErr } = await processInventoryDelta(
         store.factoryId,
         store.selectedClientId,
@@ -96,22 +130,10 @@
       );
 
       if (invErr) {
-        // 입고는 재고 부족이 날 수 없으므로 실제 오류 상황
-        // 최신 데이터로 조용히 동기화만 하고 모달은 띄우지 않음
         await loadData(store.factoryId, store.selectedClientId);
         return;
       }
       if (!inv) return;
-
-      // ── 외부 변경 보정 ──────────────────────────────────────────────
-      // server가 잠금 시점에 본 old_qty가 로컬 표시값과 다르면
-      // 다른 기기에서 중간에 변경이 있었다는 뜻.
-      // 먼저 실제 베이스값(old_qty)으로 화면을 보정한 뒤,
-      // tick()으로 렌더를 한 번 flush하고 최종값(new_qty)을 반영한다.
-      if (inv.old_qty !== localQtyBeforeApply) {
-        updateInventoryItem(selectedItemId, inv.old_qty);
-        await tick(); // 보정값 렌더 → 사용자가 "외부 변경 + 내 변경" 흐름을 확인 가능
-      }
 
       await addInventoryLog(
         store.factoryId,
@@ -124,7 +146,6 @@
         inv.new_qty
       );
 
-      // 최종 서버 확정값 반영
       updateInventoryItem(selectedItemId, inv.new_qty);
       inputValue = '';
     } finally {
@@ -464,25 +485,56 @@
   </div>
 {/if}
 
-<!-- 충돌 모달: 다른 기기에서 수정되어 재고가 업데이트됨 -->
-{#if showConflictModal}
+<!-- 외부 변경 확인 모달: 다른 기기에서 재고가 바뀐 경우 추가 여부 확인 -->
+{#if showExternalChangeModal && externalChangeInfo}
   <div class="fixed inset-0 bg-black/50 z-100 flex items-center justify-center p-4">
     <div class="bg-base-100 rounded-2xl shadow-2xl max-w-sm w-full p-6 flex flex-col gap-4">
       <div class="flex items-center gap-3">
         <span class="w-10 h-10 rounded-full bg-warning/15 flex items-center justify-center shrink-0">
           <Icon icon="heroicons:exclamation-triangle" class="w-5 h-5 text-warning" />
         </span>
-        <h3 class="text-lg font-black text-base-content">재고 변경 충돌</h3>
+        <h3 class="text-lg font-black text-base-content">다른 기기에서 재고 변경됨</h3>
       </div>
-      <p class="text-sm text-base-content/70 leading-relaxed">
-        다른 기기에서 이미 재고를 수정하여 반영할 수 없습니다.<br/>
-        최신 재고로 새로고침했으니 다시 확인 후 입력해 주세요.
+
+      <div class="rounded-xl bg-base-200 p-4 flex flex-col gap-2 text-sm">
+        <div class="flex justify-between">
+          <span class="text-base-content/50">화면에 표시된 재고</span>
+          <span class="font-bold">{externalChangeInfo.localQty}개</span>
+        </div>
+        <div class="flex justify-between font-bold text-warning">
+          <span>실제 현재 재고</span>
+          <span>
+            {externalChangeInfo.liveQty}개
+            ({externalChangeInfo.liveQty - externalChangeInfo.localQty >= 0 ? '+' : ''}{externalChangeInfo.liveQty - externalChangeInfo.localQty})
+          </span>
+        </div>
+        <div class="border-t border-base-300 mt-1 pt-2 flex justify-between">
+          <span class="text-base-content/50">내가 추가할 수량</span>
+          <span class="font-bold text-primary">+{externalChangeInfo.delta}개</span>
+        </div>
+        <div class="flex justify-between font-black">
+          <span>추가 후 최종 재고</span>
+          <span class="text-primary">{externalChangeInfo.liveQty + externalChangeInfo.delta}개</span>
+        </div>
+      </div>
+
+      <p class="text-sm text-base-content/70">
+        실제 재고 <strong>{externalChangeInfo.liveQty}개</strong>에
+        <strong>{externalChangeInfo.delta}개</strong>를 추가하시겠습니까?
       </p>
-      <button
-        type="button"
-        class="btn btn-warning w-full font-black"
-        onclick={closeConflictModal}
-      >확인</button>
+
+      <div class="flex gap-2">
+        <button
+          type="button"
+          class="btn btn-ghost flex-1 border border-base-300 font-bold"
+          onclick={cancelExternalChange}
+        >취소</button>
+        <button
+          type="button"
+          class="btn btn-primary flex-1 font-bold"
+          onclick={confirmExternalChange}
+        >추가하기</button>
+      </div>
     </div>
   </div>
 {/if}

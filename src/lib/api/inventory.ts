@@ -8,6 +8,21 @@ export async function getInventory(factoryId: string, clientId: string) {
     .eq('client_id', clientId);
 }
 
+/** 단건 재고 조회 – 외부 변경 감지용 */
+export async function getInventoryItem(
+  factoryId: string,
+  clientId: string,
+  itemId: string
+) {
+  return supabase
+    .from('inventory')
+    .select('id, quantity')
+    .eq('factory_id', factoryId)
+    .eq('client_id', clientId)
+    .eq('item_id', itemId)
+    .maybeSingle();
+}
+
 /**
  * 재고를 원자적으로 delta만큼 변경한다.
  * delta > 0 → 입고, delta < 0 → 출고

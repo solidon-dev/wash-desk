@@ -681,7 +681,6 @@ export type Database = {
           p_client_id: string
           p_item_id: string
           p_delta: number
-          p_created_by: string
         }
         Returns: Json
       }
