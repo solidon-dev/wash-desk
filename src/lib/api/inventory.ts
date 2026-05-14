@@ -26,7 +26,6 @@ export async function processInventoryDelta(
     p_client_id: clientId,
     p_item_id: itemId,
     p_delta: delta,
-    p_created_by: createdBy,
   });
 
   if (error) {
