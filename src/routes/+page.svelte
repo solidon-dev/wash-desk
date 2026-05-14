@@ -1,7 +1,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { login, getSession } from '$lib/api/auth';
   import { onMount } from 'svelte';
+  import { login } from '$lib/api/auth';
+  import { initializeStore } from '$lib/store.svelte';
 
   let id = $state('');
   let password = $state('');
@@ -9,8 +10,8 @@
   let loading = $state(false);
 
   onMount(async () => {
-    const session = await getSession();
-    if (session) goto('/laundry');
+    const ok = await initializeStore();
+    if (ok) goto('/laundry');
   });
 
   async function handleLogin(e: Event) {
