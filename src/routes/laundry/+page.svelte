@@ -1,25 +1,14 @@
 <script lang="ts">
   import Icon from '@iconify/svelte';
   import { fly } from 'svelte/transition';
-  import { store, selectClient } from '$lib/store.svelte';
-  import { getItemsByClient } from '$lib/api/items';
-  import { getCategories } from '$lib/api/categories';
-  import { getInventory, processInventoryDelta } from '$lib/api/inventory';
+  import { onMount, tick } from 'svelte';
+  import { store, loadData, updateInventoryItem, type ItemWithCategory } from '$lib/store.svelte';
+  import { processInventoryDelta } from '$lib/api/inventory';
   import { addInventoryLog, getInventoryLogs } from '$lib/api/inventory_logs';
   import { getSession } from '$lib/api/auth';
-  import type { Item, Category, InventoryLog } from '$lib/supabase/types';
-
-  // ── 타입 ─────────────────────────────────────────────────────────
-  type ItemWithCategory = Item & { categories: { id: string; name: string } | null };
-  type InventoryMap = Record<string, number>;   // item_id → quantity
-  type InventoryIdMap = Record<string, string>; // item_id → inventory.id
+  import type { InventoryLog } from '$lib/supabase/types';
 
   // ── 상태 ─────────────────────────────────────────────────────────
-  let categories = $state<Category[]>([]);
-  let items = $state<ItemWithCategory[]>([]);
-  let inventoryMap = $state<InventoryMap>({});
-  let inventoryIdMap = $state<InventoryIdMap>({});
-
   let activeCategoryId = $state<string | 'all'>('all');
   let selectedItemId = $state<string | null>(null);
   let inputValue = $state('');
@@ -30,7 +19,7 @@
   function closeConflictModal() { showConflictModal = false; }
 
   // ── 60초 자동 갱신 ───────────────────────────────────────────────
-  $effect(() => {
+  onMount(() => {
     const interval = setInterval(() => {
       if (store.factoryId && store.selectedClientId) {
         loadData(store.factoryId, store.selectedClientId);
@@ -47,58 +36,28 @@
   const LOG_PAGE_SIZE = 20;
   let logVisibleCount = $state(LOG_PAGE_SIZE);
 
-  // ── 데이터 로드 ──────────────────────────────────────────────────
-  async function loadData(factoryId: string, clientId: string) {
-    const [catRes, itemRes, invRes] = await Promise.all([
-      getCategories(clientId),
-      getItemsByClient(clientId),
-      getInventory(factoryId, clientId),
-    ]);
-
-    categories = catRes.data ?? [];
-
-    const iMap: InventoryMap = {};
-    const idMap: InventoryIdMap = {};
-    for (const row of invRes.data ?? []) {
-      iMap[row.item_id] = row.quantity;
-      idMap[row.item_id] = row.id;
-    }
-    inventoryMap = iMap;
-    inventoryIdMap = idMap;
-
-    // 재고 많은 순으로 정렬
-    const rawItems = (itemRes.data ?? []) as ItemWithCategory[];
-    items = rawItems.slice().sort((a, b) => {
-      const qa = iMap[a.id] ?? 0;
-      const qb = iMap[b.id] ?? 0;
-      return qb - qa;
-    });
-  }
-
-  // ── 거래처/공장 변경 감지 ────────────────────────────────────────
+  // ── 공장/거래처 변경 시 UI 초기화 ─────────────────────────────────
   $effect(() => {
-    const fid = store.factoryId;
-    const cid = store.selectedClientId;
-    if (fid && cid) {
-      selectedItemId = null;
-      inputValue = '';
-      loadData(fid, cid);
-    }
+    store.factoryId;
+    store.selectedClientId;
+    activeCategoryId = 'all';
+    selectedItemId   = null;
+    inputValue       = '';
   });
 
   // ── 파생값 ──────────────────────────────────────────────────────
   let filteredItems = $derived(
     activeCategoryId === 'all'
-      ? items
-      : items.filter(i => i.category_id === activeCategoryId)
+      ? store.items
+      : store.items.filter(i => i.category_id === activeCategoryId)
   );
 
   let selectedItem = $derived(
-    items.find(i => i.id === selectedItemId) ?? null
+    store.items.find(i => i.id === selectedItemId) ?? null
   );
 
   let currentQuantity = $derived(
-    selectedItemId ? (inventoryMap[selectedItemId] ?? 0) : 0
+    selectedItemId ? (store.inventoryMap[selectedItemId] ?? 0) : 0
   );
 
   let inputNum = $derived(inputValue !== '' ? parseInt(inputValue, 10) : null);
@@ -125,6 +84,9 @@
       const session = await getSession();
       if (!session) return;
 
+      // 적용 직전의 로컬 표시값을 기억 (외부 변경 감지용)
+      const localQtyBeforeApply = store.inventoryMap[selectedItemId] ?? 0;
+
       const { data: inv, error: invErr } = await processInventoryDelta(
         store.factoryId,
         store.selectedClientId,
@@ -134,12 +96,22 @@
       );
 
       if (invErr) {
-        // 충돌(재고 부족) → 최신 데이터로 갱신 후 모달
+        // 입고는 재고 부족이 날 수 없으므로 실제 오류 상황
+        // 최신 데이터로 조용히 동기화만 하고 모달은 띄우지 않음
         await loadData(store.factoryId, store.selectedClientId);
-        showConflictModal = true;
         return;
       }
       if (!inv) return;
+
+      // ── 외부 변경 보정 ──────────────────────────────────────────────
+      // server가 잠금 시점에 본 old_qty가 로컬 표시값과 다르면
+      // 다른 기기에서 중간에 변경이 있었다는 뜻.
+      // 먼저 실제 베이스값(old_qty)으로 화면을 보정한 뒤,
+      // tick()으로 렌더를 한 번 flush하고 최종값(new_qty)을 반영한다.
+      if (inv.old_qty !== localQtyBeforeApply) {
+        updateInventoryItem(selectedItemId, inv.old_qty);
+        await tick(); // 보정값 렌더 → 사용자가 "외부 변경 + 내 변경" 흐름을 확인 가능
+      }
 
       await addInventoryLog(
         store.factoryId,
@@ -152,10 +124,8 @@
         inv.new_qty
       );
 
-      // 로컬 상태 즉시 반영
-      inventoryMap = { ...inventoryMap, [selectedItemId]: inv.new_qty };
-      // 재정렬
-      items = items.slice().sort((a, b) => (inventoryMap[b.id] ?? 0) - (inventoryMap[a.id] ?? 0));
+      // 최종 서버 확정값 반영
+      updateInventoryItem(selectedItemId, inv.new_qty);
       inputValue = '';
     } finally {
       applying = false;
@@ -206,7 +176,7 @@
           {activeCategoryId === 'all' ? 'bg-primary text-primary-content' : 'text-base-content/50 hover:bg-base-200'}"
         onclick={() => selectCategory('all')}
       >전체</button>
-      {#each categories as cat (cat.id)}
+      {#each store.categories as cat (cat.id)}
         <button
           type="button"
           class="shrink-0 px-6 h-full text-base font-black transition-colors
@@ -247,7 +217,7 @@
       {:else}
         {#each filteredItems as item (item.id)}
           {@const isSel = selectedItemId === item.id}
-          {@const qty = inventoryMap[item.id] ?? 0}
+          {@const qty = store.inventoryMap[item.id] ?? 0}
           <div
             class="flex items-center min-h-20 px-6 py-3 border-b border-base-200 transition-colors border-l-4
               {isSel ? 'bg-primary/5 border-l-primary' : 'border-l-transparent hover:bg-base-50'}"
