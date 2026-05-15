@@ -112,6 +112,29 @@
   let deleteRestoreInventory = $state(true); // 기본값: 재고 복구
   let saving            = $state(false);
 
+  // ── 인라인 취소 확인 ──────────────────────────────────────────
+  let cancelConfirmId   = $state<string | null>(null);
+  let cancelRestore     = $state(true);
+
+  function openCancelConfirm(e: MouseEvent, groupId: string) {
+    e.stopPropagation();
+    cancelConfirmId = groupId;
+    cancelRestore   = true;
+    closeEditPanel();
+  }
+
+  async function doCancelShipout() {
+    if (!cancelConfirmId) return;
+    saving = true;
+    const session = await getSession();
+    if (!session) { saving = false; return; }
+    const { error } = await deleteShipout(cancelConfirmId, session.user.id, cancelRestore);
+    saving = false;
+    if (error) { alert('취소 실패: ' + error.message); return; }
+    cancelConfirmId = null;
+    await loadShipouts();
+  }
+
   function openEditPanel(group: ShipoutGroup) {
     editingShipoutId = group.id;
     editItems = group.inventory_logs.map(l => ({
@@ -243,11 +266,12 @@
   <!-- 테이블 헤더 -->
   {#if shipoutGroups.length > 0}
     <div class="h-14 bg-base-200 border-b border-base-300 px-6 shrink-0 flex items-center">
-      <div class="w-44 shrink-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider">일시</span></div>
-      <div class="w-40 shrink-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider">거래처</span></div>
+      <div class="w-52 shrink-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider">일시</span></div>
+      <div class="w-52 shrink-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider">거래처</span></div>
       <div class="flex-1 min-w-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider">품목</span></div>
       <div class="w-16 shrink-0"></div>
       <div class="w-16 shrink-0"></div>
+      <div class="w-24 shrink-0"></div>
     </div>
   {/if}
 
@@ -276,13 +300,13 @@
           onclick={() => isEditing ? closeEditPanel() : openEditPanel(group)}
           onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (isEditing ? closeEditPanel() : openEditPanel(group))}
         >
-          <div class="w-44 shrink-0">
+          <div class="w-52 shrink-0">
             <p class="text-lg font-bold text-base-content tabular-nums">
               {formatDate(group.created_at)}<br/>
               <span class="text-base font-bold text-base-content/50">{formatTime(group.created_at)}</span>
             </p>
           </div>
-          <div class="w-40 shrink-0 pr-2">
+          <div class="w-52 shrink-0 pr-2">
             <p class="text-xl font-black text-base-content truncate">{clientName(group.client_id)}</p>
           </div>
           <div class="flex-1 min-w-0">
@@ -306,6 +330,16 @@
               class="btn btn-md btn-square btn-ghost text-base-content/40 hover:text-base-content"
               onclick={(e) => openSlip(group, e)}
             ><Icon icon="heroicons:printer" class="w-6 h-6" /></button>
+          </div>
+          <div class="w-24 flex justify-center shrink-0">
+            <button
+              aria-label="출고 취소"
+              class="btn btn-sm btn-outline btn-error font-black gap-1"
+              onclick={(e) => openCancelConfirm(e, group.id)}
+            >
+              <Icon icon="heroicons:x-circle" class="w-4 h-4" />
+              취소
+            </button>
           </div>
         </div>
       {/each}
@@ -429,6 +463,73 @@
         <button class="btn btn-ghost flex-1 font-bold border border-base-300" onclick={() => deleteConfirming = false}>취소</button>
         <button class="btn btn-error flex-1 font-black" onclick={doDeleteShipout} disabled={saving}>
           {#if saving}<span class="loading loading-spinner loading-sm"></span>{:else}삭제 확인{/if}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- 출고 취소 확인 모달 -->
+{#if cancelConfirmId !== null}
+  {@const cancelGroup = shipoutGroups.find(g => g.id === cancelConfirmId)}
+  <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+    role="button" tabindex="-1"
+    onclick={() => cancelConfirmId = null}
+    onkeydown={(e) => e.key === 'Escape' && (cancelConfirmId = null)}
+    aria-label="닫기"
+  >
+    <div class="bg-base-100 rounded-2xl shadow-2xl max-w-sm w-full p-6 flex flex-col gap-4"
+      role="dialog" aria-modal="true"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
+      tabindex="-1"
+    >
+      <div class="flex items-center gap-3">
+        <span class="w-10 h-10 rounded-full bg-warning/15 flex items-center justify-center shrink-0">
+          <Icon icon="heroicons:arrow-uturn-left" class="w-5 h-5 text-warning" />
+        </span>
+        <div>
+          <h3 class="text-lg font-black text-base-content">출고 취소</h3>
+          {#if cancelGroup}
+            <p class="text-xs text-base-content/40 mt-0.5">{clientName(cancelGroup.client_id)} · {formatDate(cancelGroup.created_at)} {formatTime(cancelGroup.created_at)}</p>
+          {/if}
+        </div>
+      </div>
+      <p class="text-sm text-base-content/70 leading-relaxed">
+        이 출고를 취소하면 기록이 <strong>완전히 삭제</strong>됩니다. 재고 복구 여부를 선택하세요.
+      </p>
+      <div class="flex flex-col gap-2">
+        <button
+          type="button"
+          class="flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-colors {cancelRestore ? 'border-primary bg-primary/5' : 'border-base-300 bg-base-100'}"
+          onclick={() => cancelRestore = true}
+        >
+          <span class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 {cancelRestore ? 'border-primary' : 'border-base-300'}">
+            {#if cancelRestore}<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>{/if}
+          </span>
+          <div>
+            <p class="text-sm font-black text-base-content">재고 복구 후 취소</p>
+            <p class="text-xs text-base-content/50">출고된 수량을 재고에 다시 더하고 기록을 삭제합니다</p>
+          </div>
+        </button>
+        <button
+          type="button"
+          class="flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-colors {!cancelRestore ? 'border-error bg-error/5' : 'border-base-300 bg-base-100'}"
+          onclick={() => cancelRestore = false}
+        >
+          <span class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 {!cancelRestore ? 'border-error' : 'border-base-300'}">
+            {#if !cancelRestore}<span class="w-2.5 h-2.5 rounded-full bg-error"></span>{/if}
+          </span>
+          <div>
+            <p class="text-sm font-black text-base-content">재고 유지 후 취소</p>
+            <p class="text-xs text-base-content/50">재고는 그대로 두고 기록만 삭제합니다</p>
+          </div>
+        </button>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-ghost flex-1 font-bold border border-base-300" onclick={() => cancelConfirmId = null}>닫기</button>
+        <button class="btn btn-warning flex-1 font-black" onclick={doCancelShipout} disabled={saving}>
+          {#if saving}<span class="loading loading-spinner loading-sm"></span>{:else}취소 확인{/if}
         </button>
       </div>
     </div>
