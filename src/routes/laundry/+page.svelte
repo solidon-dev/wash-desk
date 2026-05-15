@@ -4,7 +4,7 @@
   import { onMount } from 'svelte';
   import { store, loadData, updateInventoryItem, type ItemWithCategory } from '$lib/store.svelte';
   import { processInventoryDelta, getInventoryItem } from '$lib/api/inventory';
-  import { addInventoryLog, getInventoryLogs, deleteInventoryLog } from '$lib/api/inventory_logs';
+  import { addInventoryLog, getInventoryLogs, cancelInventoryLog } from '$lib/api/inventory_logs';
   import { deleteShipout } from '$lib/api/shipouts';
   import { getSession } from '$lib/api/auth';
   import type { InventoryLog } from '$lib/supabase/types';
@@ -190,33 +190,25 @@
     if (!session) { logCancelling = false; return; }
 
     if (logCancelTarget.shipout_id) {
-      // 출고 취소 → deleteShipout RPC (항상 재고 복구)
+      // 출고 취소 → delete_shipout RPC (항상 재고 복구)
       const { error } = await deleteShipout(logCancelTarget.shipout_id, session.user.id, true);
       if (error) { logCancelling = false; alert('취소 실패: ' + error.message); return; }
     } else {
-      // 입고 취소 → 재고 -quantity 후 로그 하드딜리트
-      if (store.factoryId && store.selectedClientId) {
-        const { error: deltaErr } = await processInventoryDelta(
-          store.factoryId,
-          store.selectedClientId,
-          logCancelTarget.item_id,
-          -logCancelTarget.quantity,
-          session.user.id
-        );
-        if (deltaErr) { logCancelling = false; alert('재고 수정 실패: ' + deltaErr.message); return; }
-      }
-      const { error: delErr } = await deleteInventoryLog(logCancelTarget.id);
-      if (delErr) { logCancelling = false; alert('로그 삭제 실패: ' + delErr.message); return; }
+      // 입고 취소 → cancel_inventory_log RPC (트랜잭션: 재고 복구 + 로그 하드딜리트 원자적 처리)
+      const { error } = await cancelInventoryLog(logCancelTarget.id, session.user.id);
+      if (error) { logCancelling = false; alert('취소 실패: ' + error.message); return; }
     }
 
     logCancelling = false;
     logCancelTarget = null;
+    // 드로어 로그 새로고침
     if (logTargetItem && store.factoryId && store.selectedClientId) {
       logsLoading = true;
       const { data } = await getInventoryLogs(store.factoryId, store.selectedClientId, logTargetItem.id);
       logs = data ?? [];
       logsLoading = false;
     }
+    // 재고 스토어 갱신
     if (store.factoryId && store.selectedClientId) {
       loadData(store.factoryId, store.selectedClientId);
     }
