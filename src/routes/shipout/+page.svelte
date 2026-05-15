@@ -54,8 +54,11 @@
     _resolveExternalChange = null;
   }
 
-  // ── 60초 자동 갱신 ───────────────────────────────────────────────
+  // ── 60초 자동 갱신 + 탭 진입 시 즉시 갱신 ──────────────────────
   onMount(() => {
+    if (store.factoryId && store.selectedClientId) {
+      loadData(store.factoryId, store.selectedClientId);
+    }
     const interval = setInterval(() => {
       if (store.factoryId && store.selectedClientId) {
         loadData(store.factoryId, store.selectedClientId);

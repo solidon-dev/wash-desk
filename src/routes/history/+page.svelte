@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from '@iconify/svelte';
   import DatePicker from '$lib/components/DatePicker.svelte';
-  import { store } from '$lib/store.svelte';
+  import { store, loadData } from '$lib/store.svelte';
   import { getShipouts, updateShipout, deleteShipout } from '$lib/api/shipouts';
   import { getSession } from '$lib/api/auth';
 
@@ -133,6 +133,7 @@
     if (error) { alert('취소 실패: ' + error.message); return; }
     cancelConfirmId = null;
     await loadShipouts();
+    if (store.factoryId && store.selectedClientId) loadData(store.factoryId, store.selectedClientId);
   }
 
   function openEditPanel(group: ShipoutGroup) {
@@ -171,6 +172,7 @@
     if (error) { alert('저장 실패: ' + error.message); return; }
     closeEditPanel();
     await loadShipouts();
+    if (store.factoryId && store.selectedClientId) loadData(store.factoryId, store.selectedClientId);
   }
 
   async function doDeleteShipout() {
@@ -183,6 +185,7 @@
     if (error) { alert('삭제 실패: ' + error.message); return; }
     closeEditPanel();
     await loadShipouts();
+    if (store.factoryId && store.selectedClientId) loadData(store.factoryId, store.selectedClientId);
   }
 
   // ── 전표 모달 ─────────────────────────────────────────────────
