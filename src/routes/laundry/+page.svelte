@@ -515,14 +515,16 @@
               </div>
             </div>
             <div class="w-20 shrink-0 flex justify-end">
-              <button
-                type="button"
-                class="btn btn-sm btn-outline btn-error font-black gap-1"
-                onclick={(e) => openLogCancel(e, log)}
-              >
-                <Icon icon="heroicons:x-circle" class="w-4 h-4" />
-                취소
-              </button>
+              {#if log.log_type === 'in'}
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline btn-error font-black gap-1"
+                  onclick={(e) => openLogCancel(e, log)}
+                >
+                  <Icon icon="heroicons:x-circle" class="w-4 h-4" />
+                  취소
+                </button>
+              {/if}
             </div>
           </div>
         {/each}
