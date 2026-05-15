@@ -5,6 +5,7 @@
   import { store, loadData, updateInventoryItem, type ItemWithCategory } from '$lib/store.svelte';
   import { processInventoryDelta, getInventoryItem } from '$lib/api/inventory';
   import { addInventoryLog, getInventoryLogs } from '$lib/api/inventory_logs';
+  import { deleteShipout } from '$lib/api/shipouts';
   import { getSession } from '$lib/api/auth';
   import type { InventoryLog } from '$lib/supabase/types';
 
@@ -169,6 +170,39 @@
     showLogDrawer = false;
     logTargetItem = null;
     logs = [];
+  }
+
+  // ── 로그 취소 (출고 되돌리기) ────────────────────────────────────
+  let logCancelTarget = $state<InventoryLog | null>(null);
+  let logCancelRestore = $state(true);
+  let logCancelling = $state(false);
+
+  function openLogCancel(e: MouseEvent, log: InventoryLog) {
+    e.stopPropagation();
+    logCancelTarget = log;
+    logCancelRestore = true;
+  }
+
+  async function doLogCancel() {
+    if (!logCancelTarget?.shipout_id) return;
+    logCancelling = true;
+    const session = await getSession();
+    if (!session) { logCancelling = false; return; }
+    const { error } = await deleteShipout(logCancelTarget.shipout_id, session.user.id, logCancelRestore);
+    logCancelling = false;
+    if (error) { alert('취소 실패: ' + error.message); return; }
+    logCancelTarget = null;
+    // 드로어 로그 새로고침
+    if (logTargetItem && store.factoryId && store.selectedClientId) {
+      logsLoading = true;
+      const { data } = await getInventoryLogs(store.factoryId, store.selectedClientId, logTargetItem.id);
+      logs = data ?? [];
+      logsLoading = false;
+    }
+    // 재고 스토어도 갱신
+    if (store.factoryId && store.selectedClientId) {
+      loadData(store.factoryId, store.selectedClientId);
+    }
   }
 
   function formatTime(isoStr: string) {
@@ -423,7 +457,7 @@
     aria-label="닫기"
   ></div>
 
-  <div class="fixed top-0 right-0 h-full w-full max-w-md bg-base-100 shadow-2xl z-50 flex flex-col" transition:fly={{ x: 400, duration: 200 }}>
+  <div class="fixed top-0 right-0 h-full w-full max-w-2xl bg-base-100 shadow-2xl z-50 flex flex-col" transition:fly={{ x: 400, duration: 200 }}>
     <div class="px-6 py-5 bg-primary shrink-0 flex items-center justify-between">
       <h3 class="text-xl font-black text-primary-content truncate">
         {logTargetItem?.nickname ?? logTargetItem?.name_ko ?? ''} 기록
@@ -439,6 +473,7 @@
         <div class="text-center">입출고</div>
         <div class="text-center text-primary">수량</div>
       </div>
+      <div class="w-20 shrink-0"></div>
     </div>
 
     <div class="flex-1 overflow-y-auto">
@@ -453,8 +488,8 @@
         </div>
       {:else}
         {#each logs.slice(0, logVisibleCount) as log (log.id)}
-          <div class="px-6 py-4 border-b border-base-200 hover:bg-base-50 transition-colors">
-            <div class="grid grid-cols-3 gap-2 items-center">
+          <div class="px-6 py-4 border-b border-base-200 hover:bg-base-50 transition-colors flex items-center gap-2">
+            <div class="flex-1 grid grid-cols-3 gap-2 items-center">
               <div>
                 <span class="text-base font-black tabular-nums block">{formatTime(log.processed_at)}</span>
                 <span class="text-xs text-base-content/30">{formatDate(log.processed_at)}</span>
@@ -470,6 +505,18 @@
                 <span class="text-2xl font-black text-primary tabular-nums">{log.after_quantity ?? '—'}</span>
               </div>
             </div>
+            <div class="w-20 shrink-0 flex justify-end">
+              {#if log.shipout_id}
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline btn-error font-black gap-1"
+                  onclick={(e) => openLogCancel(e, log)}
+                >
+                  <Icon icon="heroicons:x-circle" class="w-4 h-4" />
+                  취소
+                </button>
+              {/if}
+            </div>
           </div>
         {/each}
         {#if logVisibleCount < logs.length}
@@ -481,6 +528,70 @@
           </div>
         {/if}
       {/if}
+    </div>
+  </div>
+{/if}
+
+<!-- 로그 취소 확인 모달 -->
+{#if logCancelTarget !== null}
+  <div class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4"
+    role="button" tabindex="-1"
+    onclick={() => logCancelTarget = null}
+    onkeydown={(e) => e.key === 'Escape' && (logCancelTarget = null)}
+    aria-label="닫기"
+  >
+    <div class="bg-base-100 rounded-2xl shadow-2xl max-w-sm w-full p-6 flex flex-col gap-4"
+      role="dialog" aria-modal="true"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
+      tabindex="-1"
+    >
+      <div class="flex items-center gap-3">
+        <span class="w-10 h-10 rounded-full bg-warning/15 flex items-center justify-center shrink-0">
+          <Icon icon="heroicons:arrow-uturn-left" class="w-5 h-5 text-warning" />
+        </span>
+        <div>
+          <h3 class="text-lg font-black text-base-content">출고 취소</h3>
+          <p class="text-xs text-base-content/40 mt-0.5">{formatDate(logCancelTarget.processed_at)} {formatTime(logCancelTarget.processed_at)} · {logCancelTarget.quantity}개</p>
+        </div>
+      </div>
+      <p class="text-sm text-base-content/70 leading-relaxed">
+        이 출고를 취소하면 기록이 <strong>완전히 삭제</strong>됩니다. 재고 복구 여부를 선택하세요.
+      </p>
+      <div class="flex flex-col gap-2">
+        <button
+          type="button"
+          class="flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-colors {logCancelRestore ? 'border-primary bg-primary/5' : 'border-base-300 bg-base-100'}"
+          onclick={() => logCancelRestore = true}
+        >
+          <span class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 {logCancelRestore ? 'border-primary' : 'border-base-300'}">
+            {#if logCancelRestore}<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>{/if}
+          </span>
+          <div>
+            <p class="text-sm font-black text-base-content">재고 복구 후 취소</p>
+            <p class="text-xs text-base-content/50">출고된 수량을 재고에 다시 더하고 기록을 삭제합니다</p>
+          </div>
+        </button>
+        <button
+          type="button"
+          class="flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-colors {!logCancelRestore ? 'border-error bg-error/5' : 'border-base-300 bg-base-100'}"
+          onclick={() => logCancelRestore = false}
+        >
+          <span class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 {!logCancelRestore ? 'border-error' : 'border-base-300'}">
+            {#if !logCancelRestore}<span class="w-2.5 h-2.5 rounded-full bg-error"></span>{/if}
+          </span>
+          <div>
+            <p class="text-sm font-black text-base-content">재고 유지 후 취소</p>
+            <p class="text-xs text-base-content/50">재고는 그대로 두고 기록만 삭제합니다</p>
+          </div>
+        </button>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-ghost flex-1 font-bold border border-base-300" onclick={() => logCancelTarget = null}>닫기</button>
+        <button class="btn btn-warning flex-1 font-black" onclick={doLogCancel} disabled={logCancelling}>
+          {#if logCancelling}<span class="loading loading-spinner loading-sm"></span>{:else}취소 확인{/if}
+        </button>
+      </div>
     </div>
   </div>
 {/if}
