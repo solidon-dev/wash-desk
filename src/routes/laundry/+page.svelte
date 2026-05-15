@@ -4,7 +4,7 @@
   import { onMount } from 'svelte';
   import { store, loadData, updateInventoryItem, type ItemWithCategory } from '$lib/store.svelte';
   import { processInventoryDelta, getInventoryItem } from '$lib/api/inventory';
-  import { addInventoryLog, getInventoryLogs } from '$lib/api/inventory_logs';
+  import { addInventoryLog, getInventoryLogs, deleteInventoryLog } from '$lib/api/inventory_logs';
   import { deleteShipout } from '$lib/api/shipouts';
   import { getSession } from '$lib/api/auth';
   import type { InventoryLog } from '$lib/supabase/types';
@@ -184,13 +184,32 @@
   }
 
   async function doLogCancel() {
-    if (!logCancelTarget?.shipout_id) return;
+    if (!logCancelTarget) return;
     logCancelling = true;
     const session = await getSession();
     if (!session) { logCancelling = false; return; }
-    const { error } = await deleteShipout(logCancelTarget.shipout_id, session.user.id, logCancelRestore);
+
+    if (logCancelTarget.shipout_id) {
+      // 출고 취소 → deleteShipout RPC
+      const { error } = await deleteShipout(logCancelTarget.shipout_id, session.user.id, logCancelRestore);
+      if (error) { logCancelling = false; alert('취소 실패: ' + error.message); return; }
+    } else {
+      // 입고 취소 → 재고 -quantity 후 로그 하드딬리트
+      if (logCancelRestore && store.factoryId && store.selectedClientId) {
+        const { error } = await processInventoryDelta(
+          store.factoryId,
+          store.selectedClientId,
+          logCancelTarget.item_id,
+          -logCancelTarget.quantity,
+          session.user.id
+        );
+        if (error) { logCancelling = false; alert('재고 수정 실패: ' + error.message); return; }
+      }
+      const { error } = await deleteInventoryLog(logCancelTarget.id);
+      if (error) { logCancelling = false; alert('로그 삭제 실패: ' + error.message); return; }
+    }
+
     logCancelling = false;
-    if (error) { alert('취소 실패: ' + error.message); return; }
     logCancelTarget = null;
     // 드로어 로그 새로고침
     if (logTargetItem && store.factoryId && store.selectedClientId) {
@@ -506,16 +525,14 @@
               </div>
             </div>
             <div class="w-20 shrink-0 flex justify-end">
-              {#if log.shipout_id}
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline btn-error font-black gap-1"
-                  onclick={(e) => openLogCancel(e, log)}
-                >
-                  <Icon icon="heroicons:x-circle" class="w-4 h-4" />
-                  취소
-                </button>
-              {/if}
+              <button
+                type="button"
+                class="btn btn-sm btn-outline btn-error font-black gap-1"
+                onclick={(e) => openLogCancel(e, log)}
+              >
+                <Icon icon="heroicons:x-circle" class="w-4 h-4" />
+                취소
+              </button>
             </div>
           </div>
         {/each}
@@ -551,12 +568,12 @@
           <Icon icon="heroicons:arrow-uturn-left" class="w-5 h-5 text-warning" />
         </span>
         <div>
-          <h3 class="text-lg font-black text-base-content">출고 취소</h3>
+          <h3 class="text-lg font-black text-base-content">{logCancelTarget.shipout_id ? '출고' : '입고'} 취소</h3>
           <p class="text-xs text-base-content/40 mt-0.5">{formatDate(logCancelTarget.processed_at)} {formatTime(logCancelTarget.processed_at)} · {logCancelTarget.quantity}개</p>
         </div>
       </div>
       <p class="text-sm text-base-content/70 leading-relaxed">
-        이 출고를 취소하면 기록이 <strong>완전히 삭제</strong>됩니다. 재고 복구 여부를 선택하세요.
+        이 {logCancelTarget.shipout_id ? '출고' : '입고'} 기록을 취소하면 <strong>완전히 삭제</strong>됩니다. 재고 복구 여부를 선택하세요.
       </p>
       <div class="flex flex-col gap-2">
         <button

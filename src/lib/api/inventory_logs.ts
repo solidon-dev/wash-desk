@@ -1,5 +1,9 @@
 import { supabase } from '$lib/supabase/client';
 
+export async function deleteInventoryLog(logId: string) {
+  return supabase.from('inventory_logs').delete().eq('id', logId);
+}
+
 export async function addInventoryLog(
   factoryId: string,
   clientId: string,
