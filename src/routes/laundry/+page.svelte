@@ -2,7 +2,7 @@
   import Icon from '@iconify/svelte';
   import { fly } from 'svelte/transition';
   import { onMount } from 'svelte';
-  import { store, loadData, updateInventoryItem, type ItemWithCategory } from '$lib/store.svelte';
+  import { store, loadData, updateInventoryItem, switchClient, type ItemWithCategory } from '$lib/store.svelte';
   import { processInventoryDelta, getInventoryItem } from '$lib/api/inventory';
   import { addInventoryLog, getInventoryLogs, cancelInventoryLog } from '$lib/api/inventory_logs';
   import { deleteShipout } from '$lib/api/shipouts';
@@ -230,104 +230,218 @@
   }
 </script>
 
-<div class="flex flex-1 min-h-0 min-w-0">
+<!-- ══════════════════════════════════════════════════════════
+     3단 레이아웃: 왼쪽 사이드바 | 중앙 품목 리스트 | 오른쪽 패널
+     ══════════════════════════════════════════════════════════ -->
+<div class="flex flex-1 min-h-0 min-w-0" style="background:#080d1a;">
 
-  <!-- ── 왼쪽: 품목 리스트 ─────────────────────────────────────── -->
-  <div class="flex-1 flex flex-col min-h-0 min-w-0 bg-base-100">
-
-    <!-- 카테고리 탭 -->
-    <div class="h-16 bg-base-100 border-b border-base-300 px-2 shrink-0 flex items-center gap-1 overflow-x-auto scrollbar-none">
-      <button
-        type="button"
-        class="shrink-0 px-6 h-full text-base font-black transition-colors
-          {activeCategoryId === 'all' ? 'bg-primary text-primary-content' : 'text-base-content/50 hover:bg-base-200'}"
-        onclick={() => selectCategory('all')}
-      >전체</button>
-      {#each store.categories as cat (cat.id)}
-        <button
-          type="button"
-          class="shrink-0 px-6 h-full text-base font-black transition-colors
-            {activeCategoryId === cat.id ? 'bg-primary text-primary-content' : 'text-base-content/50 hover:bg-base-200'}"
-          onclick={() => selectCategory(cat.id)}
-        >{cat.name}</button>
-      {/each}
+  <!-- ── 왼쪽 사이드바 ──────────────────────────────────────────── -->
+  <aside
+    class="hidden md:flex flex-col shrink-0 min-h-0 overflow-hidden"
+    style="width:13rem; background:#0d1328; border-right:1px solid rgba(99,179,237,0.12);"
+  >
+    <!-- 거래처 섹션 -->
+    <div class="shrink-0 px-3 pt-4 pb-1">
+      <p
+        class="text-xs font-black uppercase tracking-widest px-1 mb-2"
+        style="color:rgba(148,163,184,0.35); letter-spacing:0.12em;"
+      >거래처</p>
     </div>
 
+    <div class="flex-1 overflow-y-auto min-h-0 px-2 pb-2" style="max-height:50%;">
+      {#if store.clients.length === 0}
+        <div class="flex items-center justify-center h-16">
+          <span class="text-xs" style="color:rgba(148,163,184,0.3);">거래처 없음</span>
+        </div>
+      {:else}
+        {#each store.clients as client (client.id)}
+          {@const isActive = store.selectedClientId === client.id}
+          <button
+            type="button"
+            class="w-full text-left px-3 py-2.5 rounded-lg mb-1 flex items-center gap-2 transition-all"
+            style="
+              background:{isActive ? 'rgba(59,130,246,0.18)' : 'transparent'};
+              border:1px solid {isActive ? 'rgba(59,130,246,0.35)' : 'transparent'};
+              color:{isActive ? '#93c5fd' : 'rgba(226,232,240,0.65)'};
+            "
+            onclick={() => switchClient(client.id)}
+          >
+            <!-- 파란 점 인디케이터 -->
+            <span
+              class="shrink-0 rounded-full"
+              style="
+                width:6px; height:6px;
+                background:{isActive ? '#3b82f6' : 'rgba(148,163,184,0.2)'};
+                box-shadow:{isActive ? '0 0 6px rgba(59,130,246,0.7)' : 'none'};
+              "
+            ></span>
+            <span class="text-sm font-bold truncate">{client.name}</span>
+          </button>
+        {/each}
+      {/if}
+    </div>
 
+    <!-- 구분선 -->
+    <div class="mx-3 shrink-0" style="height:1px; background:rgba(99,179,237,0.08);"></div>
+
+    <!-- 카테고리 섹션 -->
+    <div class="shrink-0 px-3 pt-3 pb-1">
+      <p
+        class="text-xs font-black uppercase tracking-widest px-1 mb-2"
+        style="color:rgba(148,163,184,0.35); letter-spacing:0.12em;"
+      >카테고리</p>
+    </div>
+
+    <div class="overflow-y-auto px-2 pb-3" style="flex:1 1 0;">
+      <!-- 전체 버튼 -->
+      <button
+        type="button"
+        class="w-full text-left px-3 py-2.5 rounded-lg mb-1 flex items-center gap-2 transition-all"
+        style="
+          background:{activeCategoryId === 'all' ? 'rgba(139,92,246,0.18)' : 'transparent'};
+          border:1px solid {activeCategoryId === 'all' ? 'rgba(139,92,246,0.35)' : 'transparent'};
+          color:{activeCategoryId === 'all' ? '#c4b5fd' : 'rgba(226,232,240,0.65)'};
+          box-shadow:{activeCategoryId === 'all' ? '0 0 12px rgba(139,92,246,0.15)' : 'none'};
+        "
+        onclick={() => selectCategory('all')}
+      >
+        <Icon icon="heroicons:squares-2x2" style="width:14px;height:14px;flex-shrink:0;" />
+        <span class="text-sm font-bold">전체</span>
+      </button>
+
+      {#each store.categories as cat (cat.id)}
+        {@const isCatActive = activeCategoryId === cat.id}
+        <button
+          type="button"
+          class="w-full text-left px-3 py-2.5 rounded-lg mb-1 flex items-center gap-2 transition-all"
+          style="
+            background:{isCatActive ? 'rgba(139,92,246,0.18)' : 'transparent'};
+            border:1px solid {isCatActive ? 'rgba(139,92,246,0.35)' : 'transparent'};
+            color:{isCatActive ? '#c4b5fd' : 'rgba(226,232,240,0.65)'};
+            box-shadow:{isCatActive ? '0 0 12px rgba(139,92,246,0.15)' : 'none'};
+          "
+          onclick={() => selectCategory(cat.id)}
+        >
+          <Icon icon="heroicons:tag" style="width:14px;height:14px;flex-shrink:0;" />
+          <span class="text-sm font-bold truncate">{cat.name}</span>
+        </button>
+      {/each}
+    </div>
+  </aside>
+
+  <!-- ── 중앙: 품목 리스트 ──────────────────────────────────────── -->
+  <div class="flex-1 flex flex-col min-h-0 min-w-0" style="background:#080d1a;">
 
     <!-- 컬럼 헤더 -->
     {#if filteredItems.length > 0}
-      <div class="h-12 bg-base-200 border-b border-base-300 px-6 shrink-0 flex items-center">
+      <div
+        class="h-11 shrink-0 px-5 flex items-center"
+        style="background:#0d1328; border-bottom:1px solid rgba(99,179,237,0.12);"
+      >
         <div class="flex-1 min-w-0">
-          <span class="text-xs font-black text-base-content/40 uppercase tracking-wider">품목명</span>
+          <span
+            class="text-xs font-black uppercase tracking-wider"
+            style="color:rgba(148,163,184,0.4);"
+          >품목명</span>
         </div>
         <div class="w-10 shrink-0"></div>
-        <div class="w-32 text-center shrink-0">
-          <span class="text-xs font-black text-base-content/40 uppercase tracking-wider">수량</span>
+        <div class="w-28 text-center shrink-0">
+          <span
+            class="text-xs font-black uppercase tracking-wider"
+            style="color:rgba(148,163,184,0.4);"
+          >수량</span>
         </div>
-        <div class="w-14 shrink-0"></div>
+        <div class="w-12 shrink-0"></div>
       </div>
     {/if}
 
-    <!-- 품목 리스트 -->
+    <!-- 품목 리스트 본체 -->
     <div class="flex-1 overflow-y-auto min-h-0 flex flex-col">
       {#if !store.selectedClientId}
-        <div class="flex flex-col items-center justify-center flex-1 gap-2 text-base-content/30">
-          <Icon icon="heroicons:building-storefront" class="w-10 h-10 opacity-30" />
-          <p class="text-sm font-semibold">거래처를 선택해 주세요</p>
+        <div class="flex flex-col items-center justify-center flex-1 gap-3">
+          <div
+            class="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style="background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.12);"
+          >
+            <Icon icon="heroicons:building-storefront" class="w-8 h-8" style="color:rgba(99,179,237,0.25);" />
+          </div>
+          <p class="text-sm font-semibold" style="color:rgba(148,163,184,0.35);">거래처를 선택해 주세요</p>
         </div>
       {:else if filteredItems.length === 0}
-        <div class="flex flex-col items-center justify-center flex-1 gap-2 text-base-content/30">
-          <Icon icon="heroicons:inbox" class="w-10 h-10 opacity-30" />
-          <p class="text-sm font-semibold">등록된 품목이 없습니다</p>
+        <div class="flex flex-col items-center justify-center flex-1 gap-3">
+          <div
+            class="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style="background:rgba(99,179,237,0.06); border:1px solid rgba(99,179,237,0.12);"
+          >
+            <Icon icon="heroicons:inbox" class="w-8 h-8" style="color:rgba(99,179,237,0.2);" />
+          </div>
+          <p class="text-sm font-semibold" style="color:rgba(148,163,184,0.35);">등록된 품목이 없습니다</p>
         </div>
       {:else}
         {#each filteredItems as item (item.id)}
           {@const isSel = selectedItemId === item.id}
           {@const qty = store.inventoryMap[item.id] ?? 0}
           <div
-            class="flex items-center min-h-20 px-6 py-3 border-b border-base-200 transition-colors border-l-4
-              {isSel ? 'bg-primary/5 border-l-primary' : 'border-l-transparent hover:bg-base-50'}"
+            class="flex items-center min-h-[4.5rem] px-5 py-2 transition-all border-l-4"
+            style="
+              background:{isSel ? 'rgba(59,130,246,0.07)' : 'transparent'};
+              border-left-color:{isSel ? '#3b82f6' : 'transparent'};
+              border-bottom:1px solid rgba(99,179,237,0.07);
+            "
           >
+            <!-- 품목명 버튼 -->
             <button
               type="button"
               class="flex-1 py-2 text-left min-w-0"
               onclick={() => toggleItem(item.id)}
             >
-              <span class="text-xl font-bold truncate block {isSel ? 'text-primary' : 'text-base-content'}">
-                {item.nickname ?? item.name_ko}
-              </span>
-              <span class="text-xs text-base-content/30">{item.categories?.name ?? ''}</span>
+              <span
+                class="text-lg font-bold truncate block"
+                style="color:{isSel ? '#93c5fd' : '#e2e8f0'};"
+              >{item.nickname ?? item.name_ko}</span>
+              <span
+                class="text-xs"
+                style="color:rgba(148,163,184,0.4);"
+              >{item.categories?.name ?? ''}</span>
             </button>
 
             <!-- 기록 버튼 -->
             <div class="w-10 shrink-0 flex items-center justify-center">
               <button
                 type="button"
-                class="btn btn-ghost btn-sm btn-square text-base-content/30 hover:text-base-content/60"
+                class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                style="background:rgba(99,179,237,0.06); color:rgba(148,163,184,0.4);"
                 onclick={(e) => { e.stopPropagation(); openLogDrawer(item); }}
               >
-                <Icon icon="heroicons:clock" class="w-5 h-5" />
+                <Icon icon="heroicons:clock" class="w-4 h-4" />
               </button>
             </div>
 
-            <!-- 수량 -->
-            <div class="w-32 flex justify-center items-center shrink-0">
-              <span class="text-4xl font-black {qty === 0 ? 'text-base-content/20' : 'text-primary'}">
-                {qty}
-              </span>
+            <!-- 수량 표시 -->
+            <div class="w-28 flex justify-center items-center shrink-0">
+              <span
+                class="text-4xl font-black tabular-nums"
+                style="
+                  color:{qty === 0 ? 'rgba(148,163,184,0.18)' : '#3b82f6'};
+                  text-shadow:{qty > 0 ? '0 0 16px rgba(59,130,246,0.4)' : 'none'};
+                "
+              >{qty}</span>
             </div>
 
             <!-- 선택 인디케이터 -->
-            <div class="w-14 shrink-0 flex items-center justify-center">
+            <div class="w-12 shrink-0 flex items-center justify-center">
               <button
                 type="button"
-                class="w-9 h-9 rounded-full border-2 transition-all flex items-center justify-center
-                  {isSel ? 'bg-primary border-primary' : 'border-base-300 hover:border-primary'}"
+                class="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                style="
+                  background:{isSel ? '#3b82f6' : 'transparent'};
+                  border:2px solid {isSel ? '#3b82f6' : 'rgba(99,179,237,0.2)'};
+                  box-shadow:{isSel ? '0 0 12px rgba(59,130,246,0.5)' : 'none'};
+                "
                 onclick={() => toggleItem(item.id)}
               >
                 {#if isSel}
-                  <Icon icon="heroicons:check" class="w-5 h-5 text-primary-content" />
+                  <Icon icon="heroicons:check" class="w-4 h-4" style="color:#fff;" />
                 {/if}
               </button>
             </div>
@@ -338,53 +452,119 @@
   </div>
 
   <!-- ── 오른쪽 패널 ────────────────────────────────────────────── -->
-  <aside class="hidden md:flex w-2/5 bg-base-100 border-l border-base-300 flex-col shrink-0 min-h-0">
+  <aside
+    class="hidden md:flex flex-col shrink-0 min-h-0"
+    style="width:17rem; border-left:1px solid rgba(99,179,237,0.12); background:#0d1328;"
+  >
     <div class="flex-1 flex flex-col min-h-0">
       {#if selectedItem}
-        <div class="flex flex-col flex-1 gap-4 px-6 py-6 justify-center">
+        <div class="flex flex-col flex-1 min-h-0 px-3 py-3 gap-2.5">
 
-          <!-- 현재 입력값 표시 -->
-          <div class="rounded-2xl bg-base-200 flex items-center justify-center" style="height: 8rem;">
-            <span class="text-8xl font-black tabular-nums {inputNum !== null && !isNaN(inputNum) ? 'text-primary' : 'text-base-content/20'}">{inputValue || '0'}</span>
+          <!-- 선택된 품목명 + 현재 재고 -->
+          <div
+            class="px-4 py-3 rounded-xl shrink-0"
+            style="background:rgba(17,24,39,0.8); border:1px solid rgba(99,179,237,0.12);"
+          >
+            <p
+              class="text-xs font-black uppercase tracking-widest mb-0.5"
+              style="color:rgba(148,163,184,0.4);"
+            >선택 품목</p>
+            <p
+              class="text-base font-black truncate"
+              style="color:#e2e8f0;"
+            >{selectedItem.nickname ?? selectedItem.name_ko}</p>
+            <p
+              class="text-xs mt-0.5"
+              style="color:rgba(147,197,253,0.5);"
+            >현재 재고 {currentQuantity}개</p>
+          </div>
+
+          <!-- 입력값 표시 디스플레이 -->
+          <div
+            class="rounded-2xl flex items-center justify-center shrink-0"
+            style="
+              height:5rem;
+              background:rgba(17,24,39,0.9);
+              border:2px solid {inputNum !== null && !isNaN(inputNum) ? 'rgba(59,130,246,0.5)' : 'rgba(99,179,237,0.1)'};
+              box-shadow:{inputNum !== null && !isNaN(inputNum) ? '0 0 24px rgba(59,130,246,0.2), inset 0 0 20px rgba(59,130,246,0.05)' : 'none'};
+            "
+          >
+            <span
+              class="text-5xl font-black tabular-nums"
+              style="
+                color:{inputNum !== null && !isNaN(inputNum) ? '#93c5fd' : 'rgba(148,163,184,0.15)'};
+                text-shadow:{inputNum !== null && !isNaN(inputNum) ? '0 0 20px rgba(59,130,246,0.5)' : 'none'};
+              "
+            >{inputValue || '0'}</span>
           </div>
 
           <!-- 숫자패드 -->
-          <div class="grid grid-cols-3 gap-2 select-none">
+          <div class="grid grid-cols-3 gap-1.5 select-none flex-1 min-h-0">
             {#each (['1','2','3','4','5','6','7','8','9','back','0','clear'] as const) as key, i (i)}
               {#if key === 'clear'}
-                <button type="button" class="h-20 rounded-xl font-black text-xl btn btn-error btn-outline active:scale-95"
-                  onclick={() => { inputValue = ''; }}>C</button>
+                <button
+                  type="button"
+                  class="rounded-xl font-black text-lg flex items-center justify-center transition-all active:scale-95"
+                  style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#f87171;"
+                  onclick={() => { inputValue = ''; }}
+                >C</button>
               {:else if key === 'back'}
-                <button type="button" class="h-20 rounded-xl btn btn-ghost bg-base-200 border border-base-300 flex items-center justify-center active:scale-95"
-                  onclick={() => { inputValue = inputValue.slice(0, -1); }}>
-                  <Icon icon="heroicons:backspace" class="w-7 h-7" />
+                <button
+                  type="button"
+                  class="rounded-xl flex items-center justify-center transition-all active:scale-95"
+                  style="background:rgba(17,24,39,0.8); border:1px solid rgba(99,179,237,0.15); color:rgba(148,163,184,0.7);"
+                  onclick={() => { inputValue = inputValue.slice(0, -1); }}
+                >
+                  <Icon icon="heroicons:backspace" class="w-5 h-5" />
                 </button>
               {:else}
-                <button type="button" class="h-20 rounded-xl font-black text-2xl btn btn-ghost bg-base-100 border border-base-300 shadow-sm active:scale-95"
-                  onclick={() => { const v = (inputValue + key).replace(/^0+(?=\d)/, ''); if (v.length <= 6) inputValue = v; }}>{key}</button>
+                <button
+                  type="button"
+                  class="rounded-xl font-black text-xl flex items-center justify-center transition-all active:scale-95"
+                  style="background:rgba(17,24,39,0.6); border:1px solid rgba(99,179,237,0.15); color:#e2e8f0;"
+                  onclick={() => { const v = (inputValue + key).replace(/^0+(?=\d)/, ''); if (v.length <= 6) inputValue = v; }}
+                >{key}</button>
               {/if}
             {/each}
           </div>
 
-          <!-- 적용 버튼 -->
+          <!-- 추가하기 버튼 -->
           <button
             type="button"
-            class="btn btn-success w-full h-16 text-xl font-black"
+            class="w-full rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all shrink-0"
+            style="
+              height: 3.5rem;
+              background: {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'rgba(34,197,94,0.08)' : 'linear-gradient(135deg,#16a34a,#15803d)'};
+              color: {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'rgba(134,239,172,0.3)' : '#fff'};
+              border: 1px solid {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.6)'};
+              box-shadow: {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'none' : '0 0 20px rgba(34,197,94,0.3)'};
+              cursor: {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'not-allowed' : 'pointer'};
+            "
             disabled={inputNum === null || isNaN(inputNum ?? NaN) || applying}
             onclick={applyInput}
           >
             {#if applying}
               <span class="loading loading-spinner loading-sm"></span>
             {:else}
+              <Icon icon="heroicons:plus-circle" class="w-5 h-5" />
               추가하기
             {/if}
           </button>
 
         </div>
       {:else}
-        <div class="flex flex-col items-center justify-center flex-1 gap-3 text-base-content/20">
-          <Icon icon="heroicons:hand-raised" class="w-10 h-10" />
-          <p class="text-sm font-semibold">품목을 선택하세요</p>
+        <!-- 품목 미선택 상태 -->
+        <div class="flex flex-col items-center justify-center flex-1 gap-3 px-4">
+          <div
+            class="w-14 h-14 rounded-2xl flex items-center justify-center"
+            style="background:rgba(99,179,237,0.06); border:1px solid rgba(99,179,237,0.12);"
+          >
+            <Icon icon="heroicons:hand-raised" class="w-7 h-7" style="color:rgba(99,179,237,0.25);" />
+          </div>
+          <div class="text-center">
+            <p class="text-sm font-bold" style="color:rgba(148,163,184,0.5);">품목을 선택하세요</p>
+            <p class="text-xs mt-1" style="color:rgba(148,163,184,0.25);">왼쪽 목록에서 품목을<br>탭하면 수량을 입력할 수 있습니다</p>
+          </div>
         </div>
       {/if}
     </div>
@@ -633,4 +813,3 @@
     </div>
   </div>
 {/if}
-
