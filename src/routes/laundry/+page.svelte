@@ -190,35 +190,33 @@
     if (!session) { logCancelling = false; return; }
 
     if (logCancelTarget.shipout_id) {
-      // 출고 취소 → deleteShipout RPC
-      const { error } = await deleteShipout(logCancelTarget.shipout_id, session.user.id, logCancelRestore);
+      // 출고 취소 → deleteShipout RPC (항상 재고 복구)
+      const { error } = await deleteShipout(logCancelTarget.shipout_id, session.user.id, true);
       if (error) { logCancelling = false; alert('취소 실패: ' + error.message); return; }
     } else {
-      // 입고 취소 → 재고 -quantity 후 로그 하드딬리트
-      if (logCancelRestore && store.factoryId && store.selectedClientId) {
-        const { error } = await processInventoryDelta(
+      // 입고 취소 → 재고 -quantity 후 로그 하드딜리트
+      if (store.factoryId && store.selectedClientId) {
+        const { error: deltaErr } = await processInventoryDelta(
           store.factoryId,
           store.selectedClientId,
           logCancelTarget.item_id,
           -logCancelTarget.quantity,
           session.user.id
         );
-        if (error) { logCancelling = false; alert('재고 수정 실패: ' + error.message); return; }
+        if (deltaErr) { logCancelling = false; alert('재고 수정 실패: ' + deltaErr.message); return; }
       }
-      const { error } = await deleteInventoryLog(logCancelTarget.id);
-      if (error) { logCancelling = false; alert('로그 삭제 실패: ' + error.message); return; }
+      const { error: delErr } = await deleteInventoryLog(logCancelTarget.id);
+      if (delErr) { logCancelling = false; alert('로그 삭제 실패: ' + delErr.message); return; }
     }
 
     logCancelling = false;
     logCancelTarget = null;
-    // 드로어 로그 새로고침
     if (logTargetItem && store.factoryId && store.selectedClientId) {
       logsLoading = true;
       const { data } = await getInventoryLogs(store.factoryId, store.selectedClientId, logTargetItem.id);
       logs = data ?? [];
       logsLoading = false;
     }
-    // 재고 스토어도 갱신
     if (store.factoryId && store.selectedClientId) {
       loadData(store.factoryId, store.selectedClientId);
     }
@@ -573,36 +571,8 @@
         </div>
       </div>
       <p class="text-sm text-base-content/70 leading-relaxed">
-        이 {logCancelTarget.shipout_id ? '출고' : '입고'} 기록을 취소하면 <strong>완전히 삭제</strong>됩니다. 재고 복구 여부를 선택하세요.
+        이 {logCancelTarget.shipout_id ? '출고' : '입고'} 기록을 취소하면 <strong>재고가 복구</strong>되고 기록은 <strong>완전히 삭제</strong>됩니다.
       </p>
-      <div class="flex flex-col gap-2">
-        <button
-          type="button"
-          class="flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-colors {logCancelRestore ? 'border-primary bg-primary/5' : 'border-base-300 bg-base-100'}"
-          onclick={() => logCancelRestore = true}
-        >
-          <span class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 {logCancelRestore ? 'border-primary' : 'border-base-300'}">
-            {#if logCancelRestore}<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>{/if}
-          </span>
-          <div>
-            <p class="text-sm font-black text-base-content">재고 복구 후 취소</p>
-            <p class="text-xs text-base-content/50">출고된 수량을 재고에 다시 더하고 기록을 삭제합니다</p>
-          </div>
-        </button>
-        <button
-          type="button"
-          class="flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-colors {!logCancelRestore ? 'border-error bg-error/5' : 'border-base-300 bg-base-100'}"
-          onclick={() => logCancelRestore = false}
-        >
-          <span class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 {!logCancelRestore ? 'border-error' : 'border-base-300'}">
-            {#if !logCancelRestore}<span class="w-2.5 h-2.5 rounded-full bg-error"></span>{/if}
-          </span>
-          <div>
-            <p class="text-sm font-black text-base-content">재고 유지 후 취소</p>
-            <p class="text-xs text-base-content/50">재고는 그대로 두고 기록만 삭제합니다</p>
-          </div>
-        </button>
-      </div>
       <div class="flex gap-2">
         <button class="btn btn-ghost flex-1 font-bold border border-base-300" onclick={() => logCancelTarget = null}>닫기</button>
         <button class="btn btn-warning flex-1 font-black" onclick={doLogCancel} disabled={logCancelling}>
