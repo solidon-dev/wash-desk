@@ -235,97 +235,100 @@
      ══════════════════════════════════════════════════════════ -->
 <div class="flex flex-1 min-h-0 min-w-0" style="background:#080d1a;">
 
-  <!-- ── 왼쪽 사이드바 ──────────────────────────────────────────── -->
+  <!-- ── 왼쪽 사이드바: 거래처 컬럼 + 카테고리 컬럼 나란히 ────────── -->
   <aside
-    class="hidden md:flex flex-col shrink-0 min-h-0 overflow-hidden"
-    style="width:13rem; background:#0d1328; border-right:1px solid rgba(99,179,237,0.12);"
+    class="hidden md:flex flex-row shrink-0 min-h-0 overflow-hidden"
+    style="width:24rem; border-right:1px solid rgba(99,179,237,0.12);"
   >
-    <!-- 거래처 섹션 -->
-    <div class="shrink-0 px-3 pt-4 pb-1">
-      <p
-        class="text-xs font-black uppercase tracking-widest px-1 mb-2"
-        style="color:rgba(148,163,184,0.35); letter-spacing:0.12em;"
-      >거래처</p>
-    </div>
-
-    <div class="flex-1 overflow-y-auto min-h-0 px-2 pb-2" style="max-height:50%;">
-      {#if store.clients.length === 0}
-        <div class="flex items-center justify-center h-16">
-          <span class="text-xs" style="color:rgba(148,163,184,0.3);">거래처 없음</span>
-        </div>
-      {:else}
-        {#each store.clients as client (client.id)}
-          {@const isActive = store.selectedClientId === client.id}
-          <button
-            type="button"
-            class="w-full text-left px-3 py-2.5 rounded-lg mb-1 flex items-center gap-2 transition-all"
-            style="
-              background:{isActive ? 'rgba(59,130,246,0.18)' : 'transparent'};
-              border:1px solid {isActive ? 'rgba(59,130,246,0.35)' : 'transparent'};
-              color:{isActive ? '#93c5fd' : 'rgba(226,232,240,0.65)'};
-            "
-            onclick={() => switchClient(client.id)}
-          >
-            <!-- 파란 점 인디케이터 -->
-            <span
-              class="shrink-0 rounded-full"
+    <!-- 거래처 컬럼 -->
+    <div
+      class="flex flex-col min-h-0 overflow-hidden"
+      style="width:12rem; background:#0d1328; border-right:1px solid rgba(99,179,237,0.08);"
+    >
+      <div class="shrink-0 px-3 pt-4 pb-1">
+        <p
+          class="text-xs font-black uppercase tracking-widest px-1 mb-2"
+          style="color:rgba(148,163,184,0.35); letter-spacing:0.12em;"
+        >거래처</p>
+      </div>
+      <div class="flex-1 overflow-y-auto min-h-0 px-2 pb-3">
+        {#if store.clients.length === 0}
+          <div class="flex items-center justify-center h-16">
+            <span class="text-xs" style="color:rgba(148,163,184,0.3);">거래처 없음</span>
+          </div>
+        {:else}
+          {#each store.clients as client (client.id)}
+            {@const isActive = store.selectedClientId === client.id}
+            <button
+              type="button"
+              class="w-full text-left px-3 py-2.5 rounded-lg mb-1 flex items-center gap-2 transition-all"
               style="
-                width:6px; height:6px;
-                background:{isActive ? '#3b82f6' : 'rgba(148,163,184,0.2)'};
-                box-shadow:{isActive ? '0 0 6px rgba(59,130,246,0.7)' : 'none'};
+                background:{isActive ? 'rgba(59,130,246,0.18)' : 'transparent'};
+                border:1px solid {isActive ? 'rgba(59,130,246,0.35)' : 'transparent'};
+                color:{isActive ? '#93c5fd' : 'rgba(226,232,240,0.65)'};
               "
-            ></span>
-            <span class="text-sm font-bold truncate">{client.name}</span>
-          </button>
-        {/each}
-      {/if}
+              onclick={() => switchClient(client.id)}
+            >
+              <span
+                class="shrink-0 rounded-full"
+                style="
+                  width:6px; height:6px;
+                  background:{isActive ? '#3b82f6' : 'rgba(148,163,184,0.2)'};
+                  box-shadow:{isActive ? '0 0 6px rgba(59,130,246,0.7)' : 'none'};
+                "
+              ></span>
+              <span class="text-sm font-bold truncate">{client.name}</span>
+            </button>
+          {/each}
+        {/if}
+      </div>
     </div>
 
-    <!-- 구분선 -->
-    <div class="mx-3 shrink-0" style="height:1px; background:rgba(99,179,237,0.08);"></div>
-
-    <!-- 카테고리 섹션 -->
-    <div class="shrink-0 px-3 pt-3 pb-1">
-      <p
-        class="text-xs font-black uppercase tracking-widest px-1 mb-2"
-        style="color:rgba(148,163,184,0.35); letter-spacing:0.12em;"
-      >카테고리</p>
-    </div>
-
-    <div class="overflow-y-auto px-2 pb-3" style="flex:1 1 0;">
-      <!-- 전체 버튼 -->
-      <button
-        type="button"
-        class="w-full text-left px-3 py-2.5 rounded-lg mb-1 flex items-center gap-2 transition-all"
-        style="
-          background:{activeCategoryId === 'all' ? 'rgba(139,92,246,0.18)' : 'transparent'};
-          border:1px solid {activeCategoryId === 'all' ? 'rgba(139,92,246,0.35)' : 'transparent'};
-          color:{activeCategoryId === 'all' ? '#c4b5fd' : 'rgba(226,232,240,0.65)'};
-          box-shadow:{activeCategoryId === 'all' ? '0 0 12px rgba(139,92,246,0.15)' : 'none'};
-        "
-        onclick={() => selectCategory('all')}
-      >
-        <Icon icon="heroicons:squares-2x2" style="width:14px;height:14px;flex-shrink:0;" />
-        <span class="text-sm font-bold">전체</span>
-      </button>
-
-      {#each store.categories as cat (cat.id)}
-        {@const isCatActive = activeCategoryId === cat.id}
+    <!-- 카테고리 컬럼 -->
+    <div
+      class="flex flex-col min-h-0 overflow-hidden"
+      style="width:12rem; background:#0b1120;"
+    >
+      <div class="shrink-0 px-3 pt-4 pb-1">
+        <p
+          class="text-xs font-black uppercase tracking-widest px-1 mb-2"
+          style="color:rgba(148,163,184,0.35); letter-spacing:0.12em;"
+        >카테고리</p>
+      </div>
+      <div class="flex-1 overflow-y-auto min-h-0 px-2 pb-3">
+        <!-- 전체 버튼 -->
         <button
           type="button"
           class="w-full text-left px-3 py-2.5 rounded-lg mb-1 flex items-center gap-2 transition-all"
           style="
-            background:{isCatActive ? 'rgba(139,92,246,0.18)' : 'transparent'};
-            border:1px solid {isCatActive ? 'rgba(139,92,246,0.35)' : 'transparent'};
-            color:{isCatActive ? '#c4b5fd' : 'rgba(226,232,240,0.65)'};
-            box-shadow:{isCatActive ? '0 0 12px rgba(139,92,246,0.15)' : 'none'};
+            background:{activeCategoryId === 'all' ? 'rgba(139,92,246,0.18)' : 'transparent'};
+            border:1px solid {activeCategoryId === 'all' ? 'rgba(139,92,246,0.35)' : 'transparent'};
+            color:{activeCategoryId === 'all' ? '#c4b5fd' : 'rgba(226,232,240,0.65)'};
+            box-shadow:{activeCategoryId === 'all' ? '0 0 12px rgba(139,92,246,0.15)' : 'none'};
           "
-          onclick={() => selectCategory(cat.id)}
+          onclick={() => selectCategory('all')}
         >
-          <Icon icon="heroicons:tag" style="width:14px;height:14px;flex-shrink:0;" />
-          <span class="text-sm font-bold truncate">{cat.name}</span>
+          <Icon icon="heroicons:squares-2x2" style="width:14px;height:14px;flex-shrink:0;" />
+          <span class="text-sm font-bold">전체</span>
         </button>
-      {/each}
+        {#each store.categories as cat (cat.id)}
+          {@const isCatActive = activeCategoryId === cat.id}
+          <button
+            type="button"
+            class="w-full text-left px-3 py-2.5 rounded-lg mb-1 flex items-center gap-2 transition-all"
+            style="
+              background:{isCatActive ? 'rgba(139,92,246,0.18)' : 'transparent'};
+              border:1px solid {isCatActive ? 'rgba(139,92,246,0.35)' : 'transparent'};
+              color:{isCatActive ? '#c4b5fd' : 'rgba(226,232,240,0.65)'};
+              box-shadow:{isCatActive ? '0 0 12px rgba(139,92,246,0.15)' : 'none'};
+            "
+            onclick={() => selectCategory(cat.id)}
+          >
+            <Icon icon="heroicons:tag" style="width:14px;height:14px;flex-shrink:0;" />
+            <span class="text-sm font-bold truncate">{cat.name}</span>
+          </button>
+        {/each}
+      </div>
     </div>
   </aside>
 
@@ -454,7 +457,7 @@
   <!-- ── 오른쪽 패널 ────────────────────────────────────────────── -->
   <aside
     class="hidden md:flex flex-col shrink-0 min-h-0"
-    style="width:17rem; border-left:1px solid rgba(99,179,237,0.12); background:#0d1328;"
+    style="width:19rem; border-left:1px solid rgba(99,179,237,0.12); background:#0d1328;"
   >
     <div class="flex-1 flex flex-col min-h-0">
       {#if selectedItem}
