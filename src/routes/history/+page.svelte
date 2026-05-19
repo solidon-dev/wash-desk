@@ -372,7 +372,7 @@
             <button
               aria-label="수정"
               class="btn btn-square {isEditing ? 'btn-primary' : 'btn-ghost'}"
-              style="width:3.2rem; height:3.2rem; {isEditing ? '' : 'color:#e2e8f0;'}"
+              style="width:3.2rem; height:3.2rem; {isEditing ? '' : 'color:#ffffff;'}"
               onclick={(e) => { e.stopPropagation(); isEditing ? closeEditPanel() : openEditPanel(group); }}
             ><Icon icon="heroicons:pencil-square" class="w-7 h-7" /></button>
           </div>
@@ -380,7 +380,7 @@
             <button
               aria-label="전표"
               class="btn btn-square btn-ghost"
-              style="width:3.2rem; height:3.2rem; color:#e2e8f0;"
+              style="width:3.2rem; height:3.2rem; color:#ffffff;"
               onclick={(e) => openSlip(group, e)}
             ><Icon icon="heroicons:printer" class="w-7 h-7" /></button>
           </div>
