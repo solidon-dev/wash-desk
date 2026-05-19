@@ -371,16 +371,16 @@
           <div class="w-24 flex justify-center shrink-0">
             <button
               aria-label="수정"
-              class="btn btn-square {isEditing ? 'btn-primary' : 'btn-ghost'}"
-              style="width:3.2rem; height:3.2rem; {isEditing ? '' : 'color:#e2e8f0 !important;'}"
+              class="{isEditing ? 'btn btn-square btn-primary' : ''} flex items-center justify-center rounded-xl transition-all active:scale-95"
+              style="width:3.2rem; height:3.2rem; {isEditing ? '' : 'color:#e2e8f0; background:transparent; border:none;'}"
               onclick={(e) => { e.stopPropagation(); isEditing ? closeEditPanel() : openEditPanel(group); }}
             ><Icon icon="heroicons:pencil-square" class="w-7 h-7" /></button>
           </div>
           <div class="w-24 flex justify-center shrink-0">
             <button
               aria-label="전표"
-              class="btn btn-square btn-ghost"
-              style="width:3.2rem; height:3.2rem; color:#e2e8f0 !important;"
+              class="flex items-center justify-center rounded-xl transition-all active:scale-95"
+              style="width:3.2rem; height:3.2rem; color:#e2e8f0; background:transparent; border:none;"
               onclick={(e) => openSlip(group, e)}
             ><Icon icon="heroicons:printer" class="w-7 h-7" /></button>
           </div>
