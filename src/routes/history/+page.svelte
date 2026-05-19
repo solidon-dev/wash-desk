@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from '@iconify/svelte';
   import DatePicker from '$lib/components/DatePicker.svelte';
-  import { store, loadData } from '$lib/store.svelte';
+  import { store, loadData, switchClient } from '$lib/store.svelte';
   import { getShipouts, updateShipout, deleteShipout } from '$lib/api/shipouts';
   import { getSession } from '$lib/api/auth';
 
@@ -222,7 +222,51 @@
 
 <svelte:head><title>출고 현황</title></svelte:head>
 
-<div class="flex-1 flex flex-col min-h-0 relative" style="background:#080d1a;">
+<div class="flex flex-1 min-h-0 min-w-0 relative" style="background:#080d1a;">
+
+  <!-- ── 왼쪽 거래처 사이드바 ── -->
+  <aside class="hidden md:flex flex-col shrink-0 min-h-0" style="width:17rem; background:#0d1328; border-right:1px solid rgba(99,179,237,0.12);">
+    <div class="shrink-0 px-3 pt-4 pb-1">
+      <p class="text-xs font-black uppercase tracking-widest px-1 mb-2" style="color:rgba(148,163,184,0.35); letter-spacing:0.12em;">거래처</p>
+    </div>
+    <div class="flex-1 overflow-y-auto min-h-0 px-2 pb-3">
+      <!-- 전체 버튼 -->
+      <button
+        type="button"
+        class="w-full text-left px-4 py-4 rounded-lg mb-1.5 flex items-center gap-3 transition-all"
+        style="
+          min-height:3.2rem;
+          background:{store.selectedClientId === null ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.02)'};
+          border:1px solid {store.selectedClientId === null ? 'rgba(59,130,246,0.35)' : 'rgba(99,179,237,0.07)'};
+          color:{store.selectedClientId === null ? '#93c5fd' : 'rgba(226,232,240,0.65)'};
+        "
+        onclick={() => { store.selectedClientId = null; loadShipouts(); }}
+      >
+        <span class="shrink-0 rounded-full" style="width:8px; height:8px; background:{store.selectedClientId === null ? '#3b82f6' : 'rgba(148,163,184,0.15)'}; box-shadow:{store.selectedClientId === null ? '0 0 8px rgba(59,130,246,0.8)' : 'none'};"></span>
+        <span class="text-base font-bold truncate">전체</span>
+      </button>
+      {#each store.clients as client (client.id)}
+        {@const isActive = store.selectedClientId === client.id}
+        <button
+          type="button"
+          class="w-full text-left px-4 py-4 rounded-lg mb-1.5 flex items-center gap-3 transition-all"
+          style="
+            min-height:3.2rem;
+            background:{isActive ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.02)'};
+            border:1px solid {isActive ? 'rgba(59,130,246,0.35)' : 'rgba(99,179,237,0.07)'};
+            color:{isActive ? '#93c5fd' : 'rgba(226,232,240,0.65)'};
+          "
+          onclick={() => switchClient(client.id)}
+        >
+          <span class="shrink-0 rounded-full" style="width:8px; height:8px; background:{isActive ? '#3b82f6' : 'rgba(148,163,184,0.15)'}; box-shadow:{isActive ? '0 0 8px rgba(59,130,246,0.8)' : 'none'};"></span>
+          <span class="text-base font-bold truncate">{client.name}</span>
+        </button>
+      {/each}
+    </div>
+  </aside>
+
+  <!-- ── 오른쪽 메인 영역 ── -->
+  <div class="flex-1 flex flex-col min-h-0 relative">
 
   <!-- 필터 헤더 -->
   <div class="bg-base-100 border-b border-base-300 px-6 pt-5 pb-5 shrink-0 space-y-4" style="background:#0d1328; border-bottom:1px solid rgba(99,179,237,0.12);">
@@ -416,6 +460,7 @@
       </div>
     </div>
   {/if}
+  </div>
 </div>
 
 <!-- 삭제 확인 모달 -->

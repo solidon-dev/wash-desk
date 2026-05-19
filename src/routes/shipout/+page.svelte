@@ -3,7 +3,7 @@
   import DatePicker from '$lib/components/DatePicker.svelte';
   import { SvelteMap, SvelteSet } from 'svelte/reactivity';
   import { onMount } from 'svelte';
-  import { store, loadData, bulkUpdateInventory, type ItemWithCategory } from '$lib/store.svelte';
+  import { store, loadData, bulkUpdateInventory, switchClient, type ItemWithCategory } from '$lib/store.svelte';
   import { executeShipout as executeShipoutRPC } from '$lib/api/shipouts';
   import { getInventory } from '$lib/api/inventory';
   import { getSession } from '$lib/api/auth';
@@ -256,26 +256,72 @@
 
 <div class="flex flex-1 min-h-0 min-w-0" style="background:#080d1a;">
 
-  <!-- ── 품목 선택 영역 ── -->
-  <div class="flex-1 flex flex-col min-h-0">
-
-    <!-- 카테고리 탭 -->
-    <div class="h-16 px-2 shrink-0 flex items-center gap-1 overflow-x-auto scrollbar-none" style="background:#0d1328; border-bottom:1px solid rgba(99,179,237,0.12);">
-      <button
-        type="button"
-        class="shrink-0 px-6 h-full text-base font-black transition-colors rounded-none"
-        style={activeCategoryId === 'all' ? 'background:rgba(139,92,246,0.18); color:#c4b5fd; border:1px solid rgba(139,92,246,0.35);' : 'color:rgba(226,232,240,0.5); background:transparent; border:1px solid transparent;'}
-        onclick={() => selectCategory('all')}
-      >전체</button>
-      {#each store.categories as cat (cat.id)}
+  <!-- ── 왼쪽 사이드바: 거래처 + 카테고리 ── -->
+  <aside class="hidden md:flex flex-row shrink-0 min-h-0 overflow-hidden" style="width:30rem; border-right:1px solid rgba(99,179,237,0.12);">
+    <!-- 거래처 컬럼 -->
+    <div class="flex flex-col min-h-0 overflow-hidden" style="width:17rem; background:#0d1328; border-right:1px solid rgba(99,179,237,0.08);">
+      <div class="shrink-0 px-3 pt-4 pb-1">
+        <p class="text-xs font-black uppercase tracking-widest px-1 mb-2" style="color:rgba(148,163,184,0.35); letter-spacing:0.12em;">거래처</p>
+      </div>
+      <div class="flex-1 overflow-y-auto min-h-0 px-2 pb-3">
+        {#if store.clients.length === 0}
+          <div class="flex items-center justify-center h-16">
+            <span class="text-xs" style="color:rgba(148,163,184,0.3);">거래처 없음</span>
+          </div>
+        {:else}
+          {#each store.clients as client (client.id)}
+            {@const isActive = store.selectedClientId === client.id}
+            <button
+              type="button"
+              class="w-full text-left px-4 py-4 rounded-lg mb-1.5 flex items-center gap-3 transition-all"
+              style="
+                min-height:3.2rem;
+                background:{isActive ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.02)'};
+                border:1px solid {isActive ? 'rgba(59,130,246,0.35)' : 'rgba(99,179,237,0.07)'};
+                color:{isActive ? '#93c5fd' : 'rgba(226,232,240,0.65)'};
+              "
+              onclick={() => switchClient(client.id)}
+            >
+              <span class="shrink-0 rounded-full" style="width:8px; height:8px; background:{isActive ? '#3b82f6' : 'rgba(148,163,184,0.15)'}; box-shadow:{isActive ? '0 0 8px rgba(59,130,246,0.8)' : 'none'};"></span>
+              <span class="text-base font-bold truncate">{client.name}</span>
+            </button>
+          {/each}
+        {/if}
+      </div>
+    </div>
+    <!-- 카테고리 컬럼 -->
+    <div class="flex flex-col min-h-0 overflow-hidden" style="width:13rem; background:#0b1120;">
+      <div class="shrink-0 px-3 pt-4 pb-1">
+        <p class="text-xs font-black uppercase tracking-widest px-1 mb-2" style="color:rgba(148,163,184,0.35); letter-spacing:0.12em;">카테고리</p>
+      </div>
+      <div class="flex-1 overflow-y-auto min-h-0 px-2 pb-3">
         <button
           type="button"
-          class="shrink-0 px-6 h-full text-base font-black transition-colors rounded-none"
-          style={activeCategoryId === cat.id ? 'background:rgba(139,92,246,0.18); color:#c4b5fd; border:1px solid rgba(139,92,246,0.35);' : 'color:rgba(226,232,240,0.5); background:transparent; border:1px solid transparent;'}
-          onclick={() => selectCategory(cat.id)}
-        >{cat.name}</button>
-      {/each}
+          class="w-full text-left px-3 py-4 rounded-lg mb-1.5 flex items-center gap-2 transition-all"
+          style="min-height:3.2rem; background:{activeCategoryId === 'all' ? 'rgba(139,92,246,0.18)' : 'rgba(255,255,255,0.02)'}; border:1px solid {activeCategoryId === 'all' ? 'rgba(139,92,246,0.35)' : 'rgba(139,92,246,0.07)'}; color:{activeCategoryId === 'all' ? '#c4b5fd' : 'rgba(226,232,240,0.65)'};"
+          onclick={() => selectCategory('all')}
+        >
+          <Icon icon="heroicons:squares-2x2" style="width:14px;height:14px;flex-shrink:0;" />
+          <span class="text-sm font-bold">전체</span>
+        </button>
+        {#each store.categories as cat (cat.id)}
+          {@const isCatActive = activeCategoryId === cat.id}
+          <button
+            type="button"
+            class="w-full text-left px-3 py-4 rounded-lg mb-1.5 flex items-center gap-2 transition-all"
+            style="min-height:3.2rem; background:{isCatActive ? 'rgba(139,92,246,0.18)' : 'rgba(255,255,255,0.02)'}; border:1px solid {isCatActive ? 'rgba(139,92,246,0.35)' : 'rgba(139,92,246,0.07)'}; color:{isCatActive ? '#c4b5fd' : 'rgba(226,232,240,0.65)'};"
+            onclick={() => selectCategory(cat.id)}
+          >
+            <Icon icon="heroicons:tag" style="width:14px;height:14px;flex-shrink:0;" />
+            <span class="text-sm font-bold truncate">{cat.name}</span>
+          </button>
+        {/each}
+      </div>
     </div>
+  </aside>
+
+  <!-- ── 품목 선택 영역 ── -->
+  <div class="flex-1 flex flex-col min-h-0">
 
     <!-- 컬럼 헤더 -->
     {#if filteredItems.length > 0}
