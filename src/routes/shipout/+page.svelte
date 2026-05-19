@@ -380,7 +380,7 @@
               <p class="text-xs" style="color:rgba(148,163,184,0.4);">{item.categories?.name ?? ''}</p>
             </div>
             <div class="w-32 text-center shrink-0">
-              <span class="text-4xl font-black" style={stock === 0 ? 'color:rgba(148,163,184,0.18);' : 'color:#fbbf24; text-shadow:0 0 10px rgba(251,191,36,0.28);'}>{stock}</span>
+              <span class="text-4xl font-black" style={stock === 0 ? 'color:rgba(148,163,184,0.18);' : 'color:#4ade80; text-shadow:0 0 10px rgba(74,222,128,0.3);'}>{stock}</span>
             </div>
             <div class="w-52 flex items-center justify-center gap-1.5 shrink-0">
               {#if isSel}
@@ -427,10 +427,10 @@
               <span class="text-5xl font-black" style="color:#e2e8f0;">{selectedEntries.length}</span>
               <span class="text-xs font-bold" style="color:rgba(148,163,184,0.3);">종</span>
             </div>
-            <div class="rounded-2xl flex flex-col items-center justify-center gap-1" style="background:rgba(251,191,36,0.07); border:2px solid rgba(251,191,36,0.25);">
-              <span class="text-xs font-bold" style="color:rgba(251,191,36,0.55);">총 수량</span>
-              <span class="text-5xl font-black" style="color:#fbbf24; text-shadow:0 0 10px rgba(251,191,36,0.28);">{totalSelectedQty}</span>
-              <span class="text-xs font-bold" style="color:rgba(251,191,36,0.4);">개</span>
+            <div class="rounded-2xl flex flex-col items-center justify-center gap-1" style="background:rgba(74,222,128,0.07); border:2px solid rgba(74,222,128,0.28);">
+              <span class="text-xs font-bold" style="color:rgba(74,222,128,0.6);">총 수량</span>
+              <span class="text-5xl font-black" style="color:#4ade80; text-shadow:0 0 10px rgba(74,222,128,0.35);">{totalSelectedQty}</span>
+              <span class="text-xs font-bold" style="color:rgba(74,222,128,0.45);">개</span>
             </div>
           </div>
         </div>
