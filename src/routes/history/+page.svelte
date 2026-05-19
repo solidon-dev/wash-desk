@@ -319,8 +319,8 @@
       <div class="w-52 shrink-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider" style="color:rgba(148,163,184,0.4);">일시</span></div>
       <div class="w-52 shrink-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider" style="color:rgba(148,163,184,0.4);">거래처</span></div>
       <div class="flex-1 min-w-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider" style="color:rgba(148,163,184,0.4);">품목</span></div>
-      <div class="w-16 shrink-0"></div>
-      <div class="w-16 shrink-0"></div>
+      <div class="w-20 shrink-0"></div>
+      <div class="w-20 shrink-0"></div>
       <div class="w-24 shrink-0"></div>
     </div>
   {/if}
@@ -368,21 +368,21 @@
               {group.inventory_logs.map(l => l.items?.nickname ?? l.items?.name_ko ?? '').filter(Boolean).join(', ')}
             </p>
           </div>
-          <div class="w-16 flex justify-center shrink-0">
+          <div class="w-20 flex justify-center shrink-0">
             <button
               aria-label="수정"
-              class="btn btn-md btn-square {isEditing ? 'btn-primary' : 'btn-ghost'}"
-              style={isEditing ? '' : 'color:rgba(226,232,240,0.75);'}
+              class="btn btn-square {isEditing ? 'btn-primary' : 'btn-ghost'}"
+              style="width:3.2rem; height:3.2rem; {isEditing ? '' : 'color:#e2e8f0;'}"
               onclick={(e) => { e.stopPropagation(); isEditing ? closeEditPanel() : openEditPanel(group); }}
-            ><Icon icon="heroicons:pencil-square" class="w-6 h-6" /></button>
+            ><Icon icon="heroicons:pencil-square" class="w-7 h-7" /></button>
           </div>
-          <div class="w-16 flex justify-center shrink-0">
+          <div class="w-20 flex justify-center shrink-0">
             <button
               aria-label="전표"
-              class="btn btn-md btn-square btn-ghost"
-              style="color:rgba(226,232,240,0.75);"
+              class="btn btn-square btn-ghost"
+              style="width:3.2rem; height:3.2rem; color:#e2e8f0;"
               onclick={(e) => openSlip(group, e)}
-            ><Icon icon="heroicons:printer" class="w-6 h-6" /></button>
+            ><Icon icon="heroicons:printer" class="w-7 h-7" /></button>
           </div>
           <div class="w-24 flex justify-center shrink-0">
             <button
