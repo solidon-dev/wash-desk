@@ -222,16 +222,17 @@
 
 <svelte:head><title>출고 현황</title></svelte:head>
 
-<div class="flex-1 flex flex-col min-h-0 relative">
+<div class="flex-1 flex flex-col min-h-0 relative" style="background:#080d1a;">
 
   <!-- 필터 헤더 -->
-  <div class="bg-base-100 border-b border-base-300 px-6 pt-5 pb-5 shrink-0 space-y-4">
+  <div class="bg-base-100 border-b border-base-300 px-6 pt-5 pb-5 shrink-0 space-y-4" style="background:#0d1328; border-bottom:1px solid rgba(99,179,237,0.12);">
     <div class="flex items-center gap-3 flex-wrap">
       <div class="join">
         {#each quickFilters as { key, label } (key)}
           <button
             class="btn btn-sm join-item text-base font-black h-12 px-6
               {quickFilter === key ? 'btn-primary' : 'btn-ghost border border-base-300'}"
+            style={quickFilter === key ? 'background:rgba(139,92,246,0.18); color:#c4b5fd; border-color:rgba(139,92,246,0.35);' : 'background:transparent; color:rgba(226,232,240,0.6); border-color:rgba(99,179,237,0.2);'}
             onclick={() => applyQuick(key)}
           >{label}</button>
         {/each}
@@ -239,11 +240,13 @@
       <div class="flex items-center gap-2">
         <button type="button"
           class="h-12 px-5 rounded-xl border border-base-300 bg-base-100 text-lg font-bold text-base-content hover:bg-base-200 transition-colors"
+          style="background:rgba(17,24,39,0.8); border:1px solid rgba(99,179,237,0.2); color:#e2e8f0;"
           onclick={() => openPicker('from')}
         >{formatDateLabel(fromDate)}</button>
         <span class="text-base-content/30 text-xl font-bold">—</span>
         <button type="button"
           class="h-12 px-5 rounded-xl border border-base-300 bg-base-100 text-lg font-bold text-base-content hover:bg-base-200 transition-colors"
+          style="background:rgba(17,24,39,0.8); border:1px solid rgba(99,179,237,0.2); color:#e2e8f0;"
           onclick={() => openPicker('to')}
         >{formatDateLabel(toDate)}</button>
       </div>
@@ -251,27 +254,27 @@
 
     <!-- 요약 카드 -->
     <div class="grid grid-cols-3 gap-3">
-      <div class="bg-base-200 rounded-2xl px-4 py-4 text-center">
-        <p class="text-sm font-bold text-base-content/40 mb-1">출고</p>
-        <p class="text-4xl font-black text-base-content">{shipoutGroups.length}<span class="text-base font-bold text-base-content/40 ml-1">건</span></p>
+      <div class="bg-base-200 rounded-2xl px-4 py-4 text-center" style="background:rgba(17,24,39,0.8); border:1px solid rgba(99,179,237,0.12);">
+        <p class="text-sm font-bold text-base-content/40 mb-1" style="color:rgba(148,163,184,0.4);">출고</p>
+        <p class="text-4xl font-black text-base-content" style="color:#e2e8f0;">{shipoutGroups.length}<span class="text-base font-bold text-base-content/40 ml-1" style="color:rgba(148,163,184,0.4);">건</span></p>
       </div>
-      <div class="bg-base-200 rounded-2xl px-4 py-4 text-center">
-        <p class="text-sm font-bold text-base-content/40 mb-1">수량</p>
-        <p class="text-4xl font-black text-base-content">{totalItemCount}<span class="text-base font-bold text-base-content/40 ml-1">개</span></p>
+      <div class="bg-base-200 rounded-2xl px-4 py-4 text-center" style="background:rgba(17,24,39,0.8); border:1px solid rgba(99,179,237,0.12);">
+        <p class="text-sm font-bold text-base-content/40 mb-1" style="color:rgba(148,163,184,0.4);">수량</p>
+        <p class="text-4xl font-black text-base-content" style="color:#e2e8f0;">{totalItemCount}<span class="text-base font-bold text-base-content/40 ml-1" style="color:rgba(148,163,184,0.4);">개</span></p>
       </div>
-      <div class="bg-base-200 rounded-2xl px-4 py-4 text-center">
-        <p class="text-sm font-bold text-base-content/40 mb-1">거래처</p>
-        <p class="text-4xl font-black text-base-content">{uniqueClientCount}<span class="text-base font-bold text-base-content/40 ml-1">곳</span></p>
+      <div class="bg-base-200 rounded-2xl px-4 py-4 text-center" style="background:rgba(17,24,39,0.8); border:1px solid rgba(99,179,237,0.12);">
+        <p class="text-sm font-bold text-base-content/40 mb-1" style="color:rgba(148,163,184,0.4);">거래처</p>
+        <p class="text-4xl font-black text-base-content" style="color:#e2e8f0;">{uniqueClientCount}<span class="text-base font-bold text-base-content/40 ml-1" style="color:rgba(148,163,184,0.4);">곳</span></p>
       </div>
     </div>
   </div>
 
   <!-- 테이블 헤더 -->
   {#if shipoutGroups.length > 0}
-    <div class="h-14 bg-base-200 border-b border-base-300 px-6 shrink-0 flex items-center">
-      <div class="w-52 shrink-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider">일시</span></div>
-      <div class="w-52 shrink-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider">거래처</span></div>
-      <div class="flex-1 min-w-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider">품목</span></div>
+    <div class="h-14 bg-base-200 border-b border-base-300 px-6 shrink-0 flex items-center" style="background:#0d1328; border-bottom:1px solid rgba(99,179,237,0.12);">
+      <div class="w-52 shrink-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider" style="color:rgba(148,163,184,0.4);">일시</span></div>
+      <div class="w-52 shrink-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider" style="color:rgba(148,163,184,0.4);">거래처</span></div>
+      <div class="flex-1 min-w-0"><span class="text-xs font-black text-base-content/40 uppercase tracking-wider" style="color:rgba(148,163,184,0.4);">품목</span></div>
       <div class="w-16 shrink-0"></div>
       <div class="w-16 shrink-0"></div>
       <div class="w-24 shrink-0"></div>
@@ -286,11 +289,11 @@
       </div>
     {:else if shipoutGroups.length === 0}
       <div class="flex flex-col items-center justify-center h-full gap-3">
-        <div class="w-14 h-14 rounded-2xl bg-base-200 flex items-center justify-center">
+        <div class="w-14 h-14 rounded-2xl bg-base-200 flex items-center justify-center" style="background:rgba(99,179,237,0.06); border:1px solid rgba(99,179,237,0.12);">
           <Icon icon="heroicons:clipboard-document-list" class="w-7 h-7 text-base-content/20" />
         </div>
-        <p class="text-sm font-semibold text-base-content/50">출고 기록이 없습니다</p>
-        <p class="text-xs text-base-content/30">날짜 범위를 변경하거나 출고를 추가하세요</p>
+        <p class="text-sm font-semibold text-base-content/50" style="color:rgba(148,163,184,0.4);">출고 기록이 없습니다</p>
+        <p class="text-xs text-base-content/30" style="color:rgba(148,163,184,0.25);">날짜 범위를 변경하거나 출고를 추가하세요</p>
       </div>
     {:else}
       {#each shipoutGroups as group (group.id)}
@@ -300,23 +303,24 @@
           role="button" tabindex="0"
           class="flex items-center min-h-24 px-6 border-b border-base-200 cursor-pointer transition-colors
             {isEditing ? 'bg-primary/5 border-l-4 border-l-primary' : 'hover:bg-base-200/60 border-l-4 border-l-transparent'}"
+          style="border-bottom:1px solid rgba(99,179,237,0.07); {isEditing ? 'background:rgba(59,130,246,0.07); border-left-color:#3b82f6;' : 'border-left-color:transparent;'}"
           onclick={() => isEditing ? closeEditPanel() : openEditPanel(group)}
           onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (isEditing ? closeEditPanel() : openEditPanel(group))}
         >
           <div class="w-52 shrink-0">
-            <p class="text-lg font-bold text-base-content tabular-nums">
+            <p class="text-lg font-bold text-base-content tabular-nums" style="color:#e2e8f0;">
               {formatDate(group.created_at)}<br/>
-              <span class="text-base font-bold text-base-content/50">{formatTime(group.created_at)}</span>
+              <span class="text-base font-bold text-base-content/50" style="color:rgba(148,163,184,0.5);">{formatTime(group.created_at)}</span>
             </p>
           </div>
           <div class="w-52 shrink-0 pr-2">
-            <p class="text-xl font-black text-base-content truncate">{clientName(group.client_id)}</p>
+            <p class="text-xl font-black text-base-content truncate" style="color:#e2e8f0;">{clientName(group.client_id)}</p>
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-base text-base-content/60">
-              {group.inventory_logs.length}종 · <span class="font-black text-xl text-base-content">{shipTotal}개</span>
+              {group.inventory_logs.length}종 · <span class="font-black text-xl text-base-content" style="color:#3b82f6;">{shipTotal}개</span>
             </p>
-            <p class="text-xs text-base-content/30 truncate mt-0.5">
+            <p class="text-xs text-base-content/30 truncate mt-0.5" style="color:rgba(148,163,184,0.35);">
               {group.inventory_logs.map(l => l.items?.nickname ?? l.items?.name_ko ?? '').filter(Boolean).join(', ')}
             </p>
           </div>
@@ -324,6 +328,7 @@
             <button
               aria-label="수정"
               class="btn btn-md btn-square {isEditing ? 'btn-primary' : 'btn-ghost text-base-content/40 hover:text-base-content'}"
+              style={isEditing ? '' : 'color:rgba(148,163,184,0.4);'}
               onclick={(e) => { e.stopPropagation(); isEditing ? closeEditPanel() : openEditPanel(group); }}
             ><Icon icon="heroicons:pencil-square" class="w-6 h-6" /></button>
           </div>
@@ -331,6 +336,7 @@
             <button
               aria-label="전표"
               class="btn btn-md btn-square btn-ghost text-base-content/40 hover:text-base-content"
+              style="color:rgba(148,163,184,0.4);"
               onclick={(e) => openSlip(group, e)}
             ><Icon icon="heroicons:printer" class="w-6 h-6" /></button>
           </div>
@@ -353,13 +359,14 @@
   {#if editingShipoutId !== null}
     <button class="absolute inset-0 bg-black/10 z-10 cursor-default" onclick={closeEditPanel} aria-label="닫기"></button>
     <div class="absolute right-0 top-0 bottom-0 w-120 bg-base-100 shadow-2xl z-20 flex flex-col transition-transform duration-300
-      {editPanelVisible ? 'translate-x-0' : 'translate-x-full'}">
+      {editPanelVisible ? 'translate-x-0' : 'translate-x-full'}"
+      style="background:#0d1328; border-left:1px solid rgba(99,179,237,0.15);">
 
-      <div class="px-6 h-20 border-b border-base-200 flex items-center justify-between shrink-0">
+      <div class="px-6 h-20 border-b border-base-200 flex items-center justify-between shrink-0" style="border-bottom:1px solid rgba(99,179,237,0.12);">
         <div>
-          <h3 class="text-xl font-black text-base-content">출고 수정</h3>
+          <h3 class="text-xl font-black text-base-content" style="color:#e2e8f0;">출고 수정</h3>
           {#each shipoutGroups.filter(g => g.id === editingShipoutId) as g}
-              <p class="text-sm font-bold text-base-content/40 mt-0.5">{formatDate(g.created_at)} {formatTime(g.created_at)}</p>
+              <p class="text-sm font-bold text-base-content/40 mt-0.5" style="color:rgba(148,163,184,0.4);">{formatDate(g.created_at)} {formatTime(g.created_at)}</p>
           {/each}
         </div>
         <button class="btn btn-md btn-square btn-ghost text-base-content/50" onclick={closeEditPanel} aria-label="닫기">
@@ -368,30 +375,30 @@
       </div>
 
       <div class="flex-1 overflow-y-auto min-h-0">
-        <div class="px-6 py-5 border-b border-base-200">
+        <div class="px-6 py-5 border-b border-base-200" style="border-bottom:1px solid rgba(99,179,237,0.12);">
           <p class="text-sm font-black text-base-content/40 uppercase tracking-wider mb-3">품목 수량</p>
           <div class="space-y-2">
             {#each editItems as item, idx (item.item_id)}
-              <div class="flex items-center gap-3 min-h-20 rounded-xl border border-base-200 px-4">
+              <div class="flex items-center gap-3 min-h-20 rounded-xl border border-base-200 px-4" style="border:1px solid rgba(99,179,237,0.12); background:rgba(17,24,39,0.6);">
                 <div class="flex-1 min-w-0">
-                  <p class="text-xl font-bold text-base-content truncate">{item.item_name}</p>
+                  <p class="text-xl font-bold text-base-content truncate" style="color:#e2e8f0;">{item.item_name}</p>
                   {#if item.quantity === 0}
                     <p class="text-xs text-error font-bold mt-0.5">0개 → 저장 시 삭제됩니다</p>
                   {/if}
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                  <button aria-label="감소" class="btn btn-md btn-square btn-ghost border border-base-300 font-black text-2xl"
+                  <button aria-label="감소" class="btn btn-md btn-square btn-ghost border border-base-300 font-black text-2xl" style="background:rgba(17,24,39,0.8); border:1px solid rgba(99,179,237,0.2); color:#e2e8f0;"
                     onclick={() => adjustEditQty(idx, -1)}>−</button>
-                  <span class="w-14 text-center text-3xl font-black {item.quantity === 0 ? 'text-error' : 'text-primary'} tabular-nums">{item.quantity}</span>
+                  <span class="w-14 text-center text-3xl font-black {item.quantity === 0 ? 'text-error' : 'text-primary'} tabular-nums" style={item.quantity === 0 ? '' : 'color:#3b82f6;'}>{item.quantity}</span>
                   <button aria-label="증가" class="btn btn-md btn-square btn-primary font-black text-2xl"
                     onclick={() => adjustEditQty(idx, 1)}>+</button>
                 </div>
               </div>
             {/each}
           </div>
-          <div class="mt-3 flex items-center justify-between px-4 py-3 bg-base-200 rounded-xl">
-            <span class="text-sm font-black text-base-content/40 uppercase tracking-wider">합계</span>
-            <span class="text-3xl font-black text-primary tabular-nums">
+          <div class="mt-3 flex items-center justify-between px-4 py-3 bg-base-200 rounded-xl" style="background:rgba(17,24,39,0.8); border:1px solid rgba(99,179,237,0.12);">
+            <span class="text-sm font-black text-base-content/40 uppercase tracking-wider" style="color:rgba(148,163,184,0.4);">합계</span>
+            <span class="text-3xl font-black text-primary tabular-nums" style="color:#3b82f6; text-shadow:0 0 12px rgba(59,130,246,0.3);">
               {editItems.reduce((s, i) => s + i.quantity, 0)}<span class="text-base font-bold text-primary/60 ml-1">개</span>
             </span>
           </div>
@@ -399,8 +406,8 @@
 
       </div>
 
-      <div class="px-6 py-5 border-t border-base-200 flex gap-3 shrink-0">
-        <button class="btn btn-primary flex-1 h-16 font-black text-xl" onclick={saveEdit} disabled={saving}>
+      <div class="px-6 py-5 border-t border-base-200 flex gap-3 shrink-0" style="border-top:1px solid rgba(99,179,237,0.12);">
+        <button class="btn btn-primary flex-1 h-16 font-black text-xl" style="background:linear-gradient(135deg,#1d4ed8,#1e40af); border:1px solid rgba(59,130,246,0.5);" onclick={saveEdit} disabled={saving}>
           {#if saving}<span class="loading loading-spinner loading-sm"></span>{:else}저장{/if}
         </button>
         <button class="btn btn-outline btn-error h-16 px-6 font-black text-xl" onclick={() => deleteConfirming = !deleteConfirming}>
