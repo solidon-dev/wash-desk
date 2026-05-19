@@ -61,7 +61,7 @@
         onmouseleave={(e) => e.currentTarget.style.background='transparent'}
         onclick={() => showClientModal = true}
       >
-        <div class="w-2 h-2 rounded-full shrink-0" style="background:#3b82f6; box-shadow:0 0 6px rgba(59,130,246,0.7);"></div>
+        <div class="w-2 h-2 rounded-full shrink-0" style="background:#3b82f6; box-shadow:0 0 4px rgba(59,130,246,0.35);"></div>
         <span class="text-base font-black truncate max-w-48" style="color:#93c5fd;">
           {selectedClient?.name ?? '거래처 선택'}
         </span>

@@ -282,7 +282,7 @@
               "
               onclick={() => switchClient(client.id)}
             >
-              <span class="shrink-0 rounded-full" style="width:8px; height:8px; background:{isActive ? '#3b82f6' : 'rgba(148,163,184,0.15)'}; box-shadow:{isActive ? '0 0 8px rgba(59,130,246,0.8)' : 'none'};"></span>
+              <span class="shrink-0 rounded-full" style="width:8px; height:8px; background:{isActive ? '#3b82f6' : 'rgba(148,163,184,0.15)'}; box-shadow:{isActive ? '0 0 6px rgba(59,130,246,0.3)' : 'none'};"></span>
               <span class="text-base font-bold truncate">{client.name}</span>
             </button>
           {/each}
@@ -339,7 +339,7 @@
           <button
             type="button"
             class="w-9 h-9 rounded-full border-2 transition-all flex items-center justify-center"
-            style={isAllSelected ? 'background:#3b82f6; border-color:#3b82f6; box-shadow:0 0 12px rgba(59,130,246,0.5);' : 'border-color:rgba(99,179,237,0.2); background:transparent;'}
+            style={isAllSelected ? 'background:#3b82f6; border-color:#3b82f6; box-shadow:0 0 6px rgba(59,130,246,0.2);' : 'border-color:rgba(99,179,237,0.2); background:transparent;'}
             onclick={toggleSelectAll}
           >
             {#if isAllSelected}
@@ -380,7 +380,7 @@
               <p class="text-xs" style="color:rgba(148,163,184,0.4);">{item.categories?.name ?? ''}</p>
             </div>
             <div class="w-32 text-center shrink-0">
-              <span class="text-4xl font-black" style={stock === 0 ? 'color:rgba(148,163,184,0.18);' : 'color:#4ade80; text-shadow:0 0 10px rgba(74,222,128,0.3);'}>{stock}</span>
+              <span class="text-4xl font-black" style={stock === 0 ? 'color:rgba(148,163,184,0.18);' : 'color:#4ade80; text-shadow:0 0 6px rgba(74,222,128,0.15);'}>{stock}</span>
             </div>
             <div class="w-52 flex items-center justify-center gap-1.5 shrink-0">
               {#if isSel}
@@ -397,7 +397,7 @@
             </div>
             <div class="w-14 shrink-0 flex justify-center">
               <div class="w-9 h-9 rounded-full border-2 flex items-center justify-center"
-                style={isEmpty ? 'border-color:rgba(148,163,184,0.1);' : isSel ? 'background:#3b82f6; border-color:#3b82f6; box-shadow:0 0 8px rgba(59,130,246,0.35);' : 'border-color:rgba(99,179,237,0.2);'}>
+                style={isEmpty ? 'border-color:rgba(148,163,184,0.1);' : isSel ? 'background:#3b82f6; border-color:#3b82f6; box-shadow:0 0 6px rgba(59,130,246,0.15);' : 'border-color:rgba(99,179,237,0.2);'}>
                 {#if isSel}
                   <Icon icon="heroicons:check" class="w-5 h-5 text-primary-content" />
                 {/if}
@@ -429,7 +429,7 @@
             </div>
             <div class="rounded-2xl flex flex-col items-center justify-center gap-1" style="background:rgba(74,222,128,0.07); border:2px solid rgba(74,222,128,0.28);">
               <span class="text-xs font-bold" style="color:rgba(74,222,128,0.6);">총 수량</span>
-              <span class="text-5xl font-black" style="color:#4ade80; text-shadow:0 0 10px rgba(74,222,128,0.35);">{totalSelectedQty}</span>
+              <span class="text-5xl font-black" style="color:#4ade80; text-shadow:0 0 6px rgba(74,222,128,0.15);">{totalSelectedQty}</span>
               <span class="text-xs font-bold" style="color:rgba(74,222,128,0.45);">개</span>
             </div>
           </div>
@@ -448,7 +448,7 @@
       </div>
       <button
         class="btn w-full h-16 text-xl font-black"
-        style={selectedEntries.length === 0 || applying ? 'background:rgba(29,78,216,0.4); border:1px solid rgba(59,130,246,0.2); color:rgba(255,255,255,0.4); cursor:not-allowed;' : 'background:linear-gradient(135deg,#1d4ed8,#1e40af); border:1px solid rgba(59,130,246,0.5); box-shadow:0 0 12px rgba(59,130,246,0.2); color:#fff;'}
+        style={selectedEntries.length === 0 || applying ? 'background:rgba(29,78,216,0.4); border:1px solid rgba(59,130,246,0.2); color:rgba(255,255,255,0.4); cursor:not-allowed;' : 'background:linear-gradient(135deg,#1d4ed8,#1e40af); border:1px solid rgba(59,130,246,0.5); box-shadow:0 0 8px rgba(59,130,246,0.1); color:#fff;'}
         disabled={selectedEntries.length === 0 || applying}
         onclick={() => showSlipModal = true}
       >

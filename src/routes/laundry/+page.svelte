@@ -97,19 +97,22 @@
 
   async function applyInput() {
     const num = inputNum;
-    if (!num || isNaN(num) || num <= 0) return;
-    if (!store.factoryId || !store.selectedClientId || !selectedItemId) return;
+    console.log('[applyInput] start', { num, factoryId: store.factoryId, clientId: store.selectedClientId, itemId: selectedItemId });
+    if (!num || isNaN(num) || num <= 0) { console.log('[applyInput] early return: invalid num'); return; }
+    if (!store.factoryId || !store.selectedClientId || !selectedItemId) { console.log('[applyInput] early return: missing ids'); return; }
 
     applying = true;
 
     const session = await getSession();
-    if (!session) { applying = false; return; }
+    if (!session) { console.log('[applyInput] early return: no session'); applying = false; return; }
+    console.log('[applyInput] session ok:', session.user.id);
 
     // ── RPC 실행 전: 서버 현재값 단건 조회 ────────────────────────────
     const localQty = store.inventoryMap[selectedItemId] ?? 0;
-    const { data: liveRow } = await getInventoryItem(
+    const { data: liveRow, error: liveErr } = await getInventoryItem(
       store.factoryId, store.selectedClientId, selectedItemId
     );
+    console.log('[applyInput] liveRow:', liveRow, 'liveErr:', liveErr);
     const liveQty = liveRow?.quantity ?? localQty;
 
     if (liveQty !== localQty) {
@@ -125,6 +128,7 @@
 
     // ── RPC 실행 ────────────────────────────────────────────────────
     try {
+      console.log('[applyInput] calling processInventoryDelta with delta:', num);
       const { data: inv, error: invErr } = await processInventoryDelta(
         store.factoryId,
         store.selectedClientId,
@@ -132,14 +136,17 @@
         num,
         session.user.id
       );
+      console.log('[applyInput] RPC result:', { inv, invErr });
 
       if (invErr) {
+        console.error('[applyInput] RPC error:', invErr);
+        alert('재고 추가 오류: ' + invErr.message);
         await loadData(store.factoryId, store.selectedClientId);
         return;
       }
-      if (!inv) return;
+      if (!inv) { console.log('[applyInput] no inv data'); return; }
 
-      await addInventoryLog(
+      const logResult = await addInventoryLog(
         store.factoryId,
         store.selectedClientId,
         selectedItemId,
@@ -149,8 +156,10 @@
         'in',
         inv.new_qty
       );
+      console.log('[applyInput] addInventoryLog result:', logResult);
 
       updateInventoryItem(selectedItemId, inv.new_qty);
+      console.log('[applyInput] done, new_qty:', inv.new_qty);
       inputValue = '';
     } finally {
       applying = false;
@@ -275,7 +284,7 @@
                 style="
                   width:8px; height:8px;
                   background:{isActive ? '#3b82f6' : 'rgba(148,163,184,0.15)'};
-                  box-shadow:{isActive ? '0 0 8px rgba(59,130,246,0.8)' : 'none'};
+                  box-shadow:{isActive ? '0 0 6px rgba(59,130,246,0.35)' : 'none'};
                 "
               ></span>
               <span class="text-base font-bold truncate">{client.name}</span>
@@ -306,7 +315,7 @@
             background:{activeCategoryId === 'all' ? 'rgba(139,92,246,0.18)' : 'rgba(255,255,255,0.02)'};
             border:1px solid {activeCategoryId === 'all' ? 'rgba(139,92,246,0.35)' : 'rgba(139,92,246,0.07)'};
             color:{activeCategoryId === 'all' ? '#c4b5fd' : 'rgba(226,232,240,0.65)'};
-            box-shadow:{activeCategoryId === 'all' ? '0 0 12px rgba(139,92,246,0.15)' : 'none'};
+            box-shadow:{activeCategoryId === 'all' ? '0 0 8px rgba(139,92,246,0.08)' : 'none'};
           "
           onclick={() => selectCategory('all')}
         >
@@ -323,7 +332,7 @@
               background:{isCatActive ? 'rgba(139,92,246,0.18)' : 'rgba(255,255,255,0.02)'};
               border:1px solid {isCatActive ? 'rgba(139,92,246,0.35)' : 'rgba(139,92,246,0.07)'};
               color:{isCatActive ? '#c4b5fd' : 'rgba(226,232,240,0.65)'};
-              box-shadow:{isCatActive ? '0 0 12px rgba(139,92,246,0.15)' : 'none'};
+              box-shadow:{isCatActive ? '0 0 8px rgba(139,92,246,0.08)' : 'none'};
             "
             onclick={() => selectCategory(cat.id)}
           >
@@ -420,7 +429,7 @@
                   background:rgba(251,146,60,0.12);
                   border:1px solid rgba(251,146,60,0.3);
                   color:#fb923c;
-                  box-shadow:0 0 8px rgba(251,146,60,0.15);
+                  box-shadow:0 0 6px rgba(251,146,60,0.08);
                 "
                 onclick={(e) => { e.stopPropagation(); openLogDrawer(item); }}
               >
@@ -434,7 +443,7 @@
                 class="text-4xl font-black tabular-nums"
                 style="
                   color:{qty === 0 ? 'rgba(148,163,184,0.18)' : '#38bdf8'};
-                  text-shadow:{qty > 0 ? '0 0 10px rgba(56,189,248,0.25)' : 'none'};
+                  text-shadow:{qty > 0 ? '0 0 8px rgba(56,189,248,0.12)' : 'none'};
                 "
               >{qty}</span>
             </div>
@@ -447,7 +456,7 @@
                 style="
                   background:{isSel ? '#3b82f6' : 'transparent'};
                   border:2px solid {isSel ? '#3b82f6' : 'rgba(99,179,237,0.2)'};
-                  box-shadow:{isSel ? '0 0 12px rgba(59,130,246,0.5)' : 'none'};
+                  box-shadow:{isSel ? '0 0 6px rgba(59,130,246,0.2)' : 'none'};
                 "
                 onclick={() => toggleItem(item.id)}
               >
@@ -465,7 +474,7 @@
   <!-- ── 오른쪽 패널 ────────────────────────────────────────────── -->
   <aside
     class="hidden md:flex flex-col shrink-0 min-h-0"
-    style="width:22rem; border-left:1px solid rgba(99,179,237,0.12); background:#0d1328;"
+    style="width:28rem; border-left:1px solid rgba(99,179,237,0.12); background:#0d1328;"
   >
     <div class="flex-1 flex flex-col min-h-0">
       {#if selectedItem}
@@ -497,14 +506,14 @@
               height:5rem;
               background:rgba(17,24,39,0.9);
               border:2px solid {inputNum !== null && !isNaN(inputNum) ? 'rgba(59,130,246,0.5)' : 'rgba(99,179,237,0.1)'};
-              box-shadow:{inputNum !== null && !isNaN(inputNum) ? '0 0 16px rgba(59,130,246,0.12), inset 0 0 12px rgba(59,130,246,0.04)' : 'none'};
+              box-shadow:{inputNum !== null && !isNaN(inputNum) ? '0 0 8px rgba(59,130,246,0.06)' : 'none'};
             "
           >
             <span
               class="text-5xl font-black tabular-nums"
               style="
                 color:{inputNum !== null && !isNaN(inputNum) ? '#93c5fd' : 'rgba(148,163,184,0.15)'};
-                text-shadow:{inputNum !== null && !isNaN(inputNum) ? '0 0 12px rgba(59,130,246,0.35)' : 'none'};
+                text-shadow:{inputNum !== null && !isNaN(inputNum) ? '0 0 8px rgba(59,130,246,0.15)' : 'none'};
               "
             >{inputValue || '0'}</span>
           </div>
@@ -548,7 +557,7 @@
               background: {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'rgba(34,197,94,0.08)' : 'linear-gradient(135deg,#16a34a,#15803d)'};
               color: {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'rgba(134,239,172,0.3)' : '#fff'};
               border: 1px solid {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.6)'};
-              box-shadow: {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'none' : '0 0 12px rgba(34,197,94,0.2)'};
+              box-shadow: {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'none' : '0 0 8px rgba(34,197,94,0.1)'};
               cursor: {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'not-allowed' : 'pointer'};
             "
             disabled={inputNum === null || isNaN(inputNum ?? NaN) || applying}
@@ -704,9 +713,9 @@
               </div>
               <div class="text-center">
                 {#if log.log_type === 'in'}
-                  <span class="text-3xl font-black tabular-nums" style="color:#34d399; text-shadow:0 0 8px rgba(52,211,153,0.25);">+{log.quantity}</span>
+                  <span class="text-3xl font-black tabular-nums" style="color:#34d399; text-shadow:0 0 6px rgba(52,211,153,0.12);">+{log.quantity}</span>
                 {:else}
-                  <span class="text-3xl font-black tabular-nums" style="color:#f87171; text-shadow:0 0 8px rgba(248,113,113,0.25);">-{log.quantity}</span>
+                  <span class="text-3xl font-black tabular-nums" style="color:#f87171; text-shadow:0 0 6px rgba(248,113,113,0.12);">-{log.quantity}</span>
                 {/if}
               </div>
               <div class="text-right">

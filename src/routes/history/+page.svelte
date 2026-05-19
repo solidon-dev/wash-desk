@@ -242,7 +242,7 @@
         "
         onclick={() => { store.selectedClientId = null; loadShipouts(); }}
       >
-        <span class="shrink-0 rounded-full" style="width:8px; height:8px; background:{store.selectedClientId === null ? '#3b82f6' : 'rgba(148,163,184,0.15)'}; box-shadow:{store.selectedClientId === null ? '0 0 8px rgba(59,130,246,0.8)' : 'none'};"></span>
+        <span class="shrink-0 rounded-full" style="width:8px; height:8px; background:{store.selectedClientId === null ? '#3b82f6' : 'rgba(148,163,184,0.15)'}; box-shadow:{store.selectedClientId === null ? '0 0 6px rgba(59,130,246,0.3)' : 'none'};"></span>
         <span class="text-base font-bold truncate">전체</span>
       </button>
       {#each store.clients as client (client.id)}
@@ -258,7 +258,7 @@
           "
           onclick={() => switchClient(client.id)}
         >
-          <span class="shrink-0 rounded-full" style="width:8px; height:8px; background:{isActive ? '#3b82f6' : 'rgba(148,163,184,0.15)'}; box-shadow:{isActive ? '0 0 8px rgba(59,130,246,0.8)' : 'none'};"></span>
+          <span class="shrink-0 rounded-full" style="width:8px; height:8px; background:{isActive ? '#3b82f6' : 'rgba(148,163,184,0.15)'}; box-shadow:{isActive ? '0 0 6px rgba(59,130,246,0.3)' : 'none'};"></span>
           <span class="text-base font-bold truncate">{client.name}</span>
         </button>
       {/each}
@@ -442,7 +442,7 @@
           </div>
           <div class="mt-3 flex items-center justify-between px-4 py-3 bg-base-200 rounded-xl" style="background:rgba(17,24,39,0.8); border:1px solid rgba(99,179,237,0.12);">
             <span class="text-sm font-black text-base-content/40 uppercase tracking-wider" style="color:rgba(148,163,184,0.4);">합계</span>
-            <span class="text-3xl font-black text-primary tabular-nums" style="color:#3b82f6; text-shadow:0 0 8px rgba(59,130,246,0.2);">
+            <span class="text-3xl font-black text-primary tabular-nums" style="color:#3b82f6; text-shadow:0 0 6px rgba(59,130,246,0.1);">
               {editItems.reduce((s, i) => s + i.quantity, 0)}<span class="text-base font-bold text-primary/60 ml-1">개</span>
             </span>
           </div>
