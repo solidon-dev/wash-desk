@@ -238,12 +238,12 @@
   <!-- ── 왼쪽 사이드바: 거래처 컬럼 + 카테고리 컬럼 나란히 ────────── -->
   <aside
     class="hidden md:flex flex-row shrink-0 min-h-0 overflow-hidden"
-    style="width:24rem; border-right:1px solid rgba(99,179,237,0.12);"
+    style="width:30rem; border-right:1px solid rgba(99,179,237,0.12);"
   >
     <!-- 거래처 컬럼 -->
     <div
       class="flex flex-col min-h-0 overflow-hidden"
-      style="width:12rem; background:#0d1328; border-right:1px solid rgba(99,179,237,0.08);"
+      style="width:17rem; background:#0d1328; border-right:1px solid rgba(99,179,237,0.08);"
     >
       <div class="shrink-0 px-3 pt-4 pb-1">
         <p
@@ -261,10 +261,11 @@
             {@const isActive = store.selectedClientId === client.id}
             <button
               type="button"
-              class="w-full text-left px-3 py-2.5 rounded-lg mb-1 flex items-center gap-2 transition-all"
+              class="w-full text-left px-4 py-4 rounded-lg mb-1.5 flex items-center gap-3 transition-all"
               style="
-                background:{isActive ? 'rgba(59,130,246,0.18)' : 'transparent'};
-                border:1px solid {isActive ? 'rgba(59,130,246,0.35)' : 'transparent'};
+                min-height:3.2rem;
+                background:{isActive ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.02)'};
+                border:1px solid {isActive ? 'rgba(59,130,246,0.35)' : 'rgba(99,179,237,0.07)'};
                 color:{isActive ? '#93c5fd' : 'rgba(226,232,240,0.65)'};
               "
               onclick={() => switchClient(client.id)}
@@ -272,12 +273,12 @@
               <span
                 class="shrink-0 rounded-full"
                 style="
-                  width:6px; height:6px;
-                  background:{isActive ? '#3b82f6' : 'rgba(148,163,184,0.2)'};
-                  box-shadow:{isActive ? '0 0 6px rgba(59,130,246,0.7)' : 'none'};
+                  width:8px; height:8px;
+                  background:{isActive ? '#3b82f6' : 'rgba(148,163,184,0.15)'};
+                  box-shadow:{isActive ? '0 0 8px rgba(59,130,246,0.8)' : 'none'};
                 "
               ></span>
-              <span class="text-sm font-bold truncate">{client.name}</span>
+              <span class="text-base font-bold truncate">{client.name}</span>
             </button>
           {/each}
         {/if}
@@ -287,7 +288,7 @@
     <!-- 카테고리 컬럼 -->
     <div
       class="flex flex-col min-h-0 overflow-hidden"
-      style="width:12rem; background:#0b1120;"
+      style="width:13rem; background:#0b1120;"
     >
       <div class="shrink-0 px-3 pt-4 pb-1">
         <p
@@ -299,10 +300,11 @@
         <!-- 전체 버튼 -->
         <button
           type="button"
-          class="w-full text-left px-3 py-2.5 rounded-lg mb-1 flex items-center gap-2 transition-all"
+          class="w-full text-left px-3 py-4 rounded-lg mb-1.5 flex items-center gap-2 transition-all"
           style="
-            background:{activeCategoryId === 'all' ? 'rgba(139,92,246,0.18)' : 'transparent'};
-            border:1px solid {activeCategoryId === 'all' ? 'rgba(139,92,246,0.35)' : 'transparent'};
+            min-height:3.2rem;
+            background:{activeCategoryId === 'all' ? 'rgba(139,92,246,0.18)' : 'rgba(255,255,255,0.02)'};
+            border:1px solid {activeCategoryId === 'all' ? 'rgba(139,92,246,0.35)' : 'rgba(139,92,246,0.07)'};
             color:{activeCategoryId === 'all' ? '#c4b5fd' : 'rgba(226,232,240,0.65)'};
             box-shadow:{activeCategoryId === 'all' ? '0 0 12px rgba(139,92,246,0.15)' : 'none'};
           "
@@ -315,10 +317,11 @@
           {@const isCatActive = activeCategoryId === cat.id}
           <button
             type="button"
-            class="w-full text-left px-3 py-2.5 rounded-lg mb-1 flex items-center gap-2 transition-all"
+            class="w-full text-left px-3 py-4 rounded-lg mb-1.5 flex items-center gap-2 transition-all"
             style="
-              background:{isCatActive ? 'rgba(139,92,246,0.18)' : 'transparent'};
-              border:1px solid {isCatActive ? 'rgba(139,92,246,0.35)' : 'transparent'};
+              min-height:3.2rem;
+              background:{isCatActive ? 'rgba(139,92,246,0.18)' : 'rgba(255,255,255,0.02)'};
+              border:1px solid {isCatActive ? 'rgba(139,92,246,0.35)' : 'rgba(139,92,246,0.07)'};
               color:{isCatActive ? '#c4b5fd' : 'rgba(226,232,240,0.65)'};
               box-shadow:{isCatActive ? '0 0 12px rgba(139,92,246,0.15)' : 'none'};
             "
@@ -409,14 +412,19 @@
             </button>
 
             <!-- 기록 버튼 -->
-            <div class="w-10 shrink-0 flex items-center justify-center">
+            <div class="w-12 shrink-0 flex items-center justify-center">
               <button
                 type="button"
-                class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-                style="background:rgba(99,179,237,0.06); color:rgba(148,163,184,0.4);"
+                class="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95"
+                style="
+                  background:rgba(251,146,60,0.12);
+                  border:1px solid rgba(251,146,60,0.3);
+                  color:#fb923c;
+                  box-shadow:0 0 8px rgba(251,146,60,0.15);
+                "
                 onclick={(e) => { e.stopPropagation(); openLogDrawer(item); }}
               >
-                <Icon icon="heroicons:clock" class="w-4 h-4" />
+                <Icon icon="heroicons:clock" class="w-5 h-5" />
               </button>
             </div>
 
@@ -425,8 +433,8 @@
               <span
                 class="text-4xl font-black tabular-nums"
                 style="
-                  color:{qty === 0 ? 'rgba(148,163,184,0.18)' : '#3b82f6'};
-                  text-shadow:{qty > 0 ? '0 0 16px rgba(59,130,246,0.4)' : 'none'};
+                  color:{qty === 0 ? 'rgba(148,163,184,0.18)' : '#34d399'};
+                  text-shadow:{qty > 0 ? '0 0 18px rgba(52,211,153,0.55)' : 'none'};
                 "
               >{qty}</span>
             </div>
@@ -652,21 +660,26 @@
     aria-label="닫기"
   ></div>
 
-  <div class="fixed top-0 right-0 h-full w-full max-w-2xl bg-base-100 shadow-2xl z-50 flex flex-col" transition:fly={{ x: 400, duration: 200 }}>
-    <div class="px-6 py-5 bg-primary shrink-0 flex items-center justify-between">
-      <h3 class="text-xl font-black text-primary-content truncate">
-        {logTargetItem?.nickname ?? logTargetItem?.name_ko ?? ''} 기록
-      </h3>
-      <button type="button" class="btn btn-ghost btn-circle text-primary-content/70" onclick={closeLogDrawer}>
-        <Icon icon="heroicons:x-mark" class="w-6 h-6" />
+  <div class="fixed top-0 right-0 h-full w-full max-w-2xl shadow-2xl z-50 flex flex-col" style="background:#0f1729; border-left:1px solid rgba(99,179,237,0.15);" transition:fly={{ x: 400, duration: 200 }}>
+    <div class="px-6 py-5 shrink-0 flex items-center justify-between" style="background:linear-gradient(135deg,#0d1e3d,#0a1628); border-bottom:1px solid rgba(251,146,60,0.2);">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(251,146,60,0.15); border:1px solid rgba(251,146,60,0.3);">
+          <Icon icon="heroicons:clock" class="w-4 h-4" style="color:#fb923c;" />
+        </div>
+        <h3 class="text-xl font-black truncate" style="color:#e2e8f0;">
+          {logTargetItem?.nickname ?? logTargetItem?.name_ko ?? ''} 기록
+        </h3>
+      </div>
+      <button type="button" class="w-9 h-9 rounded-lg flex items-center justify-center transition-all" style="background:rgba(255,255,255,0.05); color:rgba(148,163,184,0.6);" onclick={closeLogDrawer}>
+        <Icon icon="heroicons:x-mark" class="w-5 h-5" />
       </button>
     </div>
 
-    <div class="h-12 bg-base-200 border-b border-base-300 shrink-0 flex items-center px-6">
-      <div class="flex-1 grid grid-cols-3 gap-2 text-xs font-black text-base-content/40 uppercase tracking-wider">
+    <div class="h-11 shrink-0 flex items-center px-6" style="background:#0d1328; border-bottom:1px solid rgba(99,179,237,0.1);">
+      <div class="flex-1 grid grid-cols-3 gap-2 text-xs font-black uppercase tracking-wider" style="color:rgba(148,163,184,0.4);">
         <div>시각</div>
         <div class="text-center">입출고</div>
-        <div class="text-center text-primary">수량</div>
+        <div class="text-center" style="color:#34d399;">누적수량</div>
       </div>
       <div class="w-20 shrink-0"></div>
     </div>
@@ -674,37 +687,38 @@
     <div class="flex-1 overflow-y-auto">
       {#if logsLoading}
         <div class="flex items-center justify-center h-40">
-          <span class="loading loading-spinner loading-md"></span>
+          <span class="loading loading-spinner loading-md" style="color:#3b82f6;"></span>
         </div>
       {:else if logs.length === 0}
-        <div class="flex flex-col items-center justify-center h-full text-base-content/20 gap-3">
-          <Icon icon="heroicons:clock" class="w-14 h-14 opacity-40" />
-          <p class="text-base font-bold">기록이 없습니다</p>
+        <div class="flex flex-col items-center justify-center h-full gap-3">
+          <Icon icon="heroicons:clock" class="w-14 h-14" style="color:rgba(148,163,184,0.15);" />
+          <p class="text-base font-bold" style="color:rgba(148,163,184,0.3);">기록이 없습니다</p>
         </div>
       {:else}
         {#each logs.slice(0, logVisibleCount) as log (log.id)}
-          <div class="px-6 py-4 border-b border-base-200 hover:bg-base-50 transition-colors flex items-center gap-2">
+          <div class="px-6 py-4 flex items-center gap-2 transition-colors" style="border-bottom:1px solid rgba(99,179,237,0.07);">
             <div class="flex-1 grid grid-cols-3 gap-2 items-center">
               <div>
-                <span class="text-base font-black tabular-nums block">{formatTime(log.processed_at)}</span>
-                <span class="text-xs text-base-content/30">{formatDate(log.processed_at)}</span>
+                <span class="text-base font-black tabular-nums block" style="color:#e2e8f0;">{formatTime(log.processed_at)}</span>
+                <span class="text-xs" style="color:rgba(148,163,184,0.4);">{formatDate(log.processed_at)}</span>
               </div>
               <div class="text-center">
                 {#if log.log_type === 'in'}
-                  <span class="text-3xl font-black text-success tabular-nums">+{log.quantity}</span>
+                  <span class="text-3xl font-black tabular-nums" style="color:#34d399; text-shadow:0 0 12px rgba(52,211,153,0.4);">+{log.quantity}</span>
                 {:else}
-                  <span class="text-3xl font-black text-error tabular-nums">-{log.quantity}</span>
+                  <span class="text-3xl font-black tabular-nums" style="color:#f87171; text-shadow:0 0 12px rgba(248,113,113,0.4);">-{log.quantity}</span>
                 {/if}
               </div>
               <div class="text-right">
-                <span class="text-2xl font-black text-primary tabular-nums">{log.after_quantity ?? '—'}</span>
+                <span class="text-2xl font-black tabular-nums" style="color:#93c5fd;">{log.after_quantity ?? '—'}</span>
               </div>
             </div>
             <div class="w-20 shrink-0 flex justify-end">
               {#if log.log_type === 'in'}
                 <button
                   type="button"
-                  class="btn btn-sm btn-outline btn-error font-black gap-1"
+                  class="btn btn-sm font-black gap-1"
+                  style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#f87171;"
                   onclick={(e) => openLogCancel(e, log)}
                 >
                   <Icon icon="heroicons:x-circle" class="w-4 h-4" />
@@ -716,7 +730,7 @@
         {/each}
         {#if logVisibleCount < logs.length}
           <div class="px-6 py-4">
-            <button type="button" class="btn btn-ghost w-full border border-base-300"
+            <button type="button" class="w-full py-3 rounded-xl font-bold text-sm transition-all" style="background:rgba(99,179,237,0.06); border:1px solid rgba(99,179,237,0.15); color:rgba(148,163,184,0.6);"
               onclick={() => logVisibleCount += LOG_PAGE_SIZE}>
               더 보기 ({logs.length - logVisibleCount}건)
             </button>
