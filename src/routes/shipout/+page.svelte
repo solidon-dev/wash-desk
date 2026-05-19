@@ -334,7 +334,7 @@
               <p class="text-xs" style="color:rgba(148,163,184,0.4);">{item.categories?.name ?? ''}</p>
             </div>
             <div class="w-32 text-center shrink-0">
-              <span class="text-4xl font-black" style={stock === 0 ? 'color:rgba(148,163,184,0.18);' : 'color:#3b82f6; text-shadow:0 0 16px rgba(59,130,246,0.4);'}>{stock}</span>
+              <span class="text-4xl font-black" style={stock === 0 ? 'color:rgba(148,163,184,0.18);' : 'color:#fbbf24; text-shadow:0 0 10px rgba(251,191,36,0.28);'}>{stock}</span>
             </div>
             <div class="w-52 flex items-center justify-center gap-1.5 shrink-0">
               {#if isSel}
@@ -351,7 +351,7 @@
             </div>
             <div class="w-14 shrink-0 flex justify-center">
               <div class="w-9 h-9 rounded-full border-2 flex items-center justify-center"
-                style={isEmpty ? 'border-color:rgba(148,163,184,0.1);' : isSel ? 'background:#3b82f6; border-color:#3b82f6; box-shadow:0 0 12px rgba(59,130,246,0.5);' : 'border-color:rgba(99,179,237,0.2);'}>
+                style={isEmpty ? 'border-color:rgba(148,163,184,0.1);' : isSel ? 'background:#3b82f6; border-color:#3b82f6; box-shadow:0 0 8px rgba(59,130,246,0.35);' : 'border-color:rgba(99,179,237,0.2);'}>
                 {#if isSel}
                   <Icon icon="heroicons:check" class="w-5 h-5 text-primary-content" />
                 {/if}
@@ -381,10 +381,10 @@
               <span class="text-5xl font-black" style="color:#e2e8f0;">{selectedEntries.length}</span>
               <span class="text-xs font-bold" style="color:rgba(148,163,184,0.3);">종</span>
             </div>
-            <div class="rounded-2xl flex flex-col items-center justify-center gap-1" style="background:rgba(59,130,246,0.08); border:2px solid rgba(59,130,246,0.3);">
-              <span class="text-xs font-bold" style="color:rgba(147,197,253,0.5);">총 수량</span>
-              <span class="text-5xl font-black" style="color:#3b82f6; text-shadow:0 0 16px rgba(59,130,246,0.4);">{totalSelectedQty}</span>
-              <span class="text-xs font-bold" style="color:rgba(147,197,253,0.35);">개</span>
+            <div class="rounded-2xl flex flex-col items-center justify-center gap-1" style="background:rgba(251,191,36,0.07); border:2px solid rgba(251,191,36,0.25);">
+              <span class="text-xs font-bold" style="color:rgba(251,191,36,0.55);">총 수량</span>
+              <span class="text-5xl font-black" style="color:#fbbf24; text-shadow:0 0 10px rgba(251,191,36,0.28);">{totalSelectedQty}</span>
+              <span class="text-xs font-bold" style="color:rgba(251,191,36,0.4);">개</span>
             </div>
           </div>
         </div>
@@ -402,7 +402,7 @@
       </div>
       <button
         class="btn w-full h-16 text-xl font-black"
-        style={selectedEntries.length === 0 || applying ? 'background:rgba(29,78,216,0.4); border:1px solid rgba(59,130,246,0.2); color:rgba(255,255,255,0.4); cursor:not-allowed;' : 'background:linear-gradient(135deg,#1d4ed8,#1e40af); border:1px solid rgba(59,130,246,0.5); box-shadow:0 0 20px rgba(59,130,246,0.3); color:#fff;'}
+        style={selectedEntries.length === 0 || applying ? 'background:rgba(29,78,216,0.4); border:1px solid rgba(59,130,246,0.2); color:rgba(255,255,255,0.4); cursor:not-allowed;' : 'background:linear-gradient(135deg,#1d4ed8,#1e40af); border:1px solid rgba(59,130,246,0.5); box-shadow:0 0 12px rgba(59,130,246,0.2); color:#fff;'}
         disabled={selectedEntries.length === 0 || applying}
         onclick={() => showSlipModal = true}
       >
@@ -547,7 +547,7 @@
         </div>
         <button type="button"
           class="btn w-full h-14 text-xl font-black"
-          style={numpadValue === '' ? 'background:rgba(22,163,74,0.3); border:1px solid rgba(34,197,94,0.2); color:rgba(255,255,255,0.4); cursor:not-allowed;' : 'background:linear-gradient(135deg,#16a34a,#15803d); border:1px solid rgba(34,197,94,0.5); box-shadow:0 0 16px rgba(34,197,94,0.3); color:#fff;'}
+          style={numpadValue === '' ? 'background:rgba(22,163,74,0.3); border:1px solid rgba(34,197,94,0.2); color:rgba(255,255,255,0.4); cursor:not-allowed;' : 'background:linear-gradient(135deg,#16a34a,#15803d); border:1px solid rgba(34,197,94,0.5); box-shadow:0 0 10px rgba(34,197,94,0.18); color:#fff;'}
           disabled={numpadValue === ''}
           onclick={() => handleNumpadConfirm(numpadValue)}
         >수량 확인</button>

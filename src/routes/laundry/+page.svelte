@@ -433,8 +433,8 @@
               <span
                 class="text-4xl font-black tabular-nums"
                 style="
-                  color:{qty === 0 ? 'rgba(148,163,184,0.18)' : '#34d399'};
-                  text-shadow:{qty > 0 ? '0 0 10px rgba(52,211,153,0.3)' : 'none'};
+                  color:{qty === 0 ? 'rgba(148,163,184,0.18)' : '#e879f9'};
+                  text-shadow:{qty > 0 ? '0 0 10px rgba(232,121,249,0.3)' : 'none'};
                 "
               >{qty}</span>
             </div>
