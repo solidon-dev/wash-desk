@@ -434,7 +434,7 @@
                 class="text-4xl font-black tabular-nums"
                 style="
                   color:{qty === 0 ? 'rgba(148,163,184,0.18)' : '#34d399'};
-                  text-shadow:{qty > 0 ? '0 0 18px rgba(52,211,153,0.55)' : 'none'};
+                  text-shadow:{qty > 0 ? '0 0 10px rgba(52,211,153,0.3)' : 'none'};
                 "
               >{qty}</span>
             </div>
@@ -465,7 +465,7 @@
   <!-- ── 오른쪽 패널 ────────────────────────────────────────────── -->
   <aside
     class="hidden md:flex flex-col shrink-0 min-h-0"
-    style="width:19rem; border-left:1px solid rgba(99,179,237,0.12); background:#0d1328;"
+    style="width:22rem; border-left:1px solid rgba(99,179,237,0.12); background:#0d1328;"
   >
     <div class="flex-1 flex flex-col min-h-0">
       {#if selectedItem}
@@ -497,14 +497,14 @@
               height:5rem;
               background:rgba(17,24,39,0.9);
               border:2px solid {inputNum !== null && !isNaN(inputNum) ? 'rgba(59,130,246,0.5)' : 'rgba(99,179,237,0.1)'};
-              box-shadow:{inputNum !== null && !isNaN(inputNum) ? '0 0 24px rgba(59,130,246,0.2), inset 0 0 20px rgba(59,130,246,0.05)' : 'none'};
+              box-shadow:{inputNum !== null && !isNaN(inputNum) ? '0 0 16px rgba(59,130,246,0.12), inset 0 0 12px rgba(59,130,246,0.04)' : 'none'};
             "
           >
             <span
               class="text-5xl font-black tabular-nums"
               style="
                 color:{inputNum !== null && !isNaN(inputNum) ? '#93c5fd' : 'rgba(148,163,184,0.15)'};
-                text-shadow:{inputNum !== null && !isNaN(inputNum) ? '0 0 20px rgba(59,130,246,0.5)' : 'none'};
+                text-shadow:{inputNum !== null && !isNaN(inputNum) ? '0 0 12px rgba(59,130,246,0.35)' : 'none'};
               "
             >{inputValue || '0'}</span>
           </div>
@@ -548,7 +548,7 @@
               background: {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'rgba(34,197,94,0.08)' : 'linear-gradient(135deg,#16a34a,#15803d)'};
               color: {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'rgba(134,239,172,0.3)' : '#fff'};
               border: 1px solid {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.6)'};
-              box-shadow: {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'none' : '0 0 20px rgba(34,197,94,0.3)'};
+              box-shadow: {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'none' : '0 0 12px rgba(34,197,94,0.2)'};
               cursor: {inputNum === null || isNaN(inputNum ?? NaN) || applying ? 'not-allowed' : 'pointer'};
             "
             disabled={inputNum === null || isNaN(inputNum ?? NaN) || applying}
@@ -704,9 +704,9 @@
               </div>
               <div class="text-center">
                 {#if log.log_type === 'in'}
-                  <span class="text-3xl font-black tabular-nums" style="color:#34d399; text-shadow:0 0 12px rgba(52,211,153,0.4);">+{log.quantity}</span>
+                  <span class="text-3xl font-black tabular-nums" style="color:#34d399; text-shadow:0 0 8px rgba(52,211,153,0.25);">+{log.quantity}</span>
                 {:else}
-                  <span class="text-3xl font-black tabular-nums" style="color:#f87171; text-shadow:0 0 12px rgba(248,113,113,0.4);">-{log.quantity}</span>
+                  <span class="text-3xl font-black tabular-nums" style="color:#f87171; text-shadow:0 0 8px rgba(248,113,113,0.25);">-{log.quantity}</span>
                 {/if}
               </div>
               <div class="text-right">

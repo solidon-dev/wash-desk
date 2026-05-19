@@ -48,23 +48,25 @@
   const selectedFactory = $derived(store.factories.find(f => f.id === store.factoryId) ?? null);
 </script>
 
-<div class="flex flex-col h-screen bg-base-200 overflow-hidden select-none">
+<div class="flex flex-col h-screen overflow-hidden select-none" style="background:#080d1a;">
   {#if currentPath !== '/'}
-    <header class="h-16 bg-primary flex items-center shrink-0 z-10 px-2">
+    <header class="h-16 flex items-center shrink-0 z-10 px-2" style="background:linear-gradient(90deg,#0a1628 0%,#0d1e3d 50%,#0a1628 100%); border-bottom:1px solid rgba(99,179,237,0.18); box-shadow:0 2px 24px rgba(0,0,0,0.5);">
 
       <!-- 거래처 버튼 -->
       <button
         type="button"
-        class="flex items-center gap-2 px-6 h-full hover:bg-white/10 transition-colors shrink-0"
+        class="flex items-center gap-2 px-5 h-full transition-colors shrink-0"
+        style="border-right:1px solid rgba(99,179,237,0.12);"
+        onmouseenter={(e) => e.currentTarget.style.background='rgba(59,130,246,0.08)'}
+        onmouseleave={(e) => e.currentTarget.style.background='transparent'}
         onclick={() => showClientModal = true}
       >
-        <span class="text-xl font-black text-white truncate max-w-48">
+        <div class="w-2 h-2 rounded-full shrink-0" style="background:#3b82f6; box-shadow:0 0 6px rgba(59,130,246,0.7);"></div>
+        <span class="text-base font-black truncate max-w-48" style="color:#93c5fd;">
           {selectedClient?.name ?? '거래처 선택'}
         </span>
-        <Icon icon="heroicons:chevron-down" class="w-5 h-5 text-white/50 shrink-0" />
+        <Icon icon="heroicons:chevron-down" class="w-4 h-4 shrink-0" style="color:rgba(147,197,253,0.4);" />
       </button>
-
-      <div class="w-px h-8 bg-white/20 mx-1 shrink-0"></div>
 
       <!-- 탭 네비 -->
       <nav class="flex h-full flex-1">
@@ -72,8 +74,12 @@
           {@const isActive = currentPath === nav.path}
           <button
             type="button"
-            class="px-8 h-full text-base font-black transition-colors
-              {isActive ? 'bg-white text-primary' : 'text-white/60 hover:text-white hover:bg-white/10'}"
+            class="px-8 h-full text-base font-black transition-all relative"
+            style="
+              color:{isActive ? '#e2e8f0' : 'rgba(148,163,184,0.5)'};
+              background:{isActive ? 'rgba(59,130,246,0.12)' : 'transparent'};
+              border-bottom:{isActive ? '2px solid #3b82f6' : '2px solid transparent'};
+            "
             onclick={() => void goto(nav.path)}
           >{nav.label}</button>
         {/each}
@@ -83,39 +89,48 @@
       {#if store.isSuperAdmin}
         <button
           type="button"
-          class="flex items-center gap-2 px-5 h-full hover:bg-white/10 transition-colors shrink-0 border-l border-white/20"
+          class="flex items-center gap-2 px-5 h-full transition-colors shrink-0"
+          style="border-left:1px solid rgba(99,179,237,0.12);"
+          onmouseenter={(e) => e.currentTarget.style.background='rgba(99,179,237,0.06)'}
+          onmouseleave={(e) => e.currentTarget.style.background='transparent'}
           onclick={() => showFactoryModal = true}
         >
-          <Icon icon="heroicons:building-office-2" class="w-5 h-5 text-white/60 shrink-0" />
-          <span class="text-sm font-bold text-white/80 truncate max-w-36">
+          <Icon icon="heroicons:building-office-2" class="w-5 h-5 shrink-0" style="color:rgba(148,163,184,0.5);" />
+          <span class="text-sm font-bold truncate max-w-36" style="color:rgba(148,163,184,0.7);">
             {selectedFactory?.name ?? '공장 선택'}
           </span>
-          <Icon icon="heroicons:chevron-down" class="w-4 h-4 text-white/40 shrink-0" />
+          <Icon icon="heroicons:chevron-down" class="w-4 h-4 shrink-0" style="color:rgba(148,163,184,0.35);" />
         </button>
       {/if}
 
       <!-- 새로고침 버튼 -->
       <button
         type="button"
-        class="flex items-center justify-center w-12 h-full hover:bg-white/10 transition-colors shrink-0 border-l border-white/20"
+        class="flex items-center justify-center w-12 h-full transition-colors shrink-0"
+        style="border-left:1px solid rgba(99,179,237,0.12);"
+        onmouseenter={(e) => e.currentTarget.style.background='rgba(99,179,237,0.08)'}
+        onmouseleave={(e) => e.currentTarget.style.background='transparent'}
         onclick={refresh}
         title="새로고침"
       >
         {#if store.dataLoading || appLoading}
-          <span class="loading loading-spinner loading-sm text-white/60"></span>
+          <span class="loading loading-spinner loading-sm" style="color:rgba(147,197,253,0.5);"></span>
         {:else}
-          <Icon icon="heroicons:arrow-path" class="w-5 h-5 text-white/60" />
+          <Icon icon="heroicons:arrow-path" class="w-5 h-5" style="color:rgba(148,163,184,0.45);" />
         {/if}
       </button>
 
       <!-- 로그아웃 버튼 -->
       <button
         type="button"
-        class="flex items-center justify-center w-12 h-full hover:bg-red-500/20 transition-colors shrink-0 border-l border-white/20"
+        class="flex items-center justify-center w-12 h-full transition-colors shrink-0"
+        style="border-left:1px solid rgba(99,179,237,0.12);"
+        onmouseenter={(e) => e.currentTarget.style.background='rgba(239,68,68,0.1)'}
+        onmouseleave={(e) => e.currentTarget.style.background='transparent'}
         onclick={handleLogout}
         title="로그아웃"
       >
-        <Icon icon="heroicons:arrow-right-on-rectangle" class="w-5 h-5 text-white/60" />
+        <Icon icon="heroicons:arrow-right-on-rectangle" class="w-5 h-5" style="color:rgba(148,163,184,0.45);" />
       </button>
 
     </header>
