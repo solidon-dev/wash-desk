@@ -361,26 +361,26 @@
             <p class="text-xl font-black text-base-content truncate" style="color:#e2e8f0;">{clientName(group.client_id)}</p>
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-base text-base-content/60">
-              {group.inventory_logs.length}종 · <span class="font-black text-xl text-base-content" style="color:#3b82f6;">{shipTotal}개</span>
+            <p class="text-base font-bold" style="color:#e2e8f0;">
+              {group.inventory_logs.length}종 · <span class="font-black text-xl" style="color:#38bdf8;">{shipTotal}개</span>
             </p>
-            <p class="text-xs text-base-content/30 truncate mt-0.5" style="color:rgba(148,163,184,0.35);">
+            <p class="text-xs truncate mt-0.5" style="color:rgba(148,163,184,0.65);">
               {group.inventory_logs.map(l => l.items?.nickname ?? l.items?.name_ko ?? '').filter(Boolean).join(', ')}
             </p>
           </div>
           <div class="w-16 flex justify-center shrink-0">
             <button
               aria-label="수정"
-              class="btn btn-md btn-square {isEditing ? 'btn-primary' : 'btn-ghost text-base-content/40 hover:text-base-content'}"
-              style={isEditing ? '' : 'color:rgba(148,163,184,0.4);'}
+              class="btn btn-md btn-square {isEditing ? 'btn-primary' : 'btn-ghost'}"
+              style={isEditing ? '' : 'color:rgba(226,232,240,0.75);'}
               onclick={(e) => { e.stopPropagation(); isEditing ? closeEditPanel() : openEditPanel(group); }}
             ><Icon icon="heroicons:pencil-square" class="w-6 h-6" /></button>
           </div>
           <div class="w-16 flex justify-center shrink-0">
             <button
               aria-label="전표"
-              class="btn btn-md btn-square btn-ghost text-base-content/40 hover:text-base-content"
-              style="color:rgba(148,163,184,0.4);"
+              class="btn btn-md btn-square btn-ghost"
+              style="color:rgba(226,232,240,0.75);"
               onclick={(e) => openSlip(group, e)}
             ><Icon icon="heroicons:printer" class="w-6 h-6" /></button>
           </div>
