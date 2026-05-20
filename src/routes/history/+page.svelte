@@ -415,7 +415,7 @@
         </div>
         <button
           class="flex items-center justify-center rounded-xl transition-all active:scale-95"
-          style="width:2.8rem; height:2.8rem; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.35); color:#f87171;"
+          style="width:2.8rem; height:2.8rem; background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.35); color:#93c5fd;"
           onclick={closeEditPanel} aria-label="닫기"
         >
           <Icon icon="heroicons:x-mark" class="w-6 h-6" />
