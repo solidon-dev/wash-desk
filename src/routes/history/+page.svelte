@@ -413,7 +413,11 @@
               <p class="text-sm font-bold text-base-content/40 mt-0.5" style="color:rgba(148,163,184,0.4);">{formatDate(g.created_at)} {formatTime(g.created_at)}</p>
           {/each}
         </div>
-        <button class="btn btn-md btn-square btn-ghost text-base-content/50" onclick={closeEditPanel} aria-label="닫기">
+        <button
+          class="flex items-center justify-center rounded-xl transition-all active:scale-95"
+          style="width:2.8rem; height:2.8rem; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.35); color:#f87171;"
+          onclick={closeEditPanel} aria-label="닫기"
+        >
           <Icon icon="heroicons:x-mark" class="w-6 h-6" />
         </button>
       </div>
